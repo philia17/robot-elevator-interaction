@@ -2,7 +2,7 @@
 
 Perception, geometric reasoning and guarded robot-arm software for recognising and activating physical elevator buttons. This research implementation combines RGB-D perception on a Jetson AGX Orin with a RoArm-M3 arm and explicit operator control.
 
-[Project overview and complete platform figure](https://siheng-ye-portfolio.minjunc1984.chatgpt.site/#lift-title) · [Siheng Ye](https://github.com/philia17)
+[Project overview and complete platform figure](https://philia17.github.io/#lift-title) · [Siheng Ye](https://github.com/philia17)
 
 ## Research and contribution
 
