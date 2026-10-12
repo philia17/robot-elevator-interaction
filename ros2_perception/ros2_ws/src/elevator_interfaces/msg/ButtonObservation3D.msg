@@ -1,0 +1,16 @@
+string detection_id
+float32 x_min
+float32 y_min
+float32 x_max
+float32 y_max
+float32 center_x
+float32 center_y
+float32 detector_confidence
+bool depth_valid
+float32 depth_m
+float32 depth_valid_ratio
+float32 x_m
+float32 y_m
+float32 z_m
+string coarse_type
+ButtonSurfaceGeometry surface_geometry

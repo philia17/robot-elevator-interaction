@@ -1,0 +1,18 @@
+gemini335_canonical_adapter:
+  ros__parameters:
+    raw_optical_frame: gemini335_color_optical_frame
+    canonical_optical_frame: camera_optical_frame
+    canonical_width: 1920
+    canonical_height: 1080
+    max_image_publish_hz: 30.0
+    phase2_preview_publish_hz: 5.0
+    color_image.raw_topic: /gemini335/color/image_raw
+    color_image.canonical_topic: /lift_robot/camera/color/image_raw
+    color_camera_info.raw_topic: /gemini335/color/camera_info
+    color_camera_info.canonical_topic: /lift_robot/camera/color/camera_info
+    aligned_depth_image.raw_topic: /gemini335/depth/image_raw
+    aligned_depth_image.canonical_topic: /lift_robot/camera/aligned_depth/image_raw
+    aligned_depth_camera_info.raw_topic: /gemini335/depth/camera_info
+    aligned_depth_camera_info.canonical_topic: /lift_robot/camera/aligned_depth/camera_info
+    phase2_preview.rgbd_topic: /lift_robot/camera/phase2_preview/rgbd
+    phase2_preview.camera_info_topic: /lift_robot/camera/phase2_preview/color/camera_info

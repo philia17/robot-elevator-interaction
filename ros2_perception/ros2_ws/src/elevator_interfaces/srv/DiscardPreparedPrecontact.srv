@@ -1,0 +1,13 @@
+# Discard one exact, unconsumed Dynamic-IK Prepare ticket without motion.
+string executor_instance_nonce
+string plan_hash
+string confirmation_token
+---
+bool accepted
+string state
+string executor_instance_nonce
+string plan_hash
+uint32 publisher_count
+bool lease_active
+uint32 arm_client_count
+string reason

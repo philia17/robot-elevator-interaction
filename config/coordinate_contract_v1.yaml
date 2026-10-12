@@ -1,0 +1,270 @@
+# Lift Robot coordinate contract. This file is structurally valid but deliberately
+# NOT execution-ready until every required calibration below is measured.
+coordinate_contract:
+  schema_version: 1
+  version: "1.0.0"
+  status: frozen
+  frozen_at: "2026-07-16"
+  authority: "docs/coordinate_contract.md"
+
+  notation:
+    transform: "T_parent_child"
+    meaning: "coordinates in child are mapped into parent: p_parent = T_parent_child * p_child"
+    ros_transform_stamped: "header.frame_id=parent; child_frame_id=child"
+    ros_pose_stamped: "header.frame_id is the frame in which pose components are expressed"
+
+  units:
+    external_length: m
+    external_angle: rad
+    orientation: quaternion_xyzw
+    image_coordinate: px
+    time: ns
+    confidence: unit_interval
+    raw_depth: device_unit_requires_explicit_scale_to_m
+    robodk_adapter_length: mm
+    robodk_adapter_rule: "convert m<->mm exactly once at the RoboDK boundary"
+
+  axes:
+    body:
+      handedness: right
+      x: forward
+      y: left
+      z: up
+    optical:
+      handedness: right
+      x: right
+      y: down
+      z: forward
+
+  frames:
+    map: {class: body, owner: slam_localization}
+    odom: {class: body, owner: odometry}
+    cart_base: {class: body, owner: cart_description}
+    camera_link: {class: body, owner: lift_robot_camera_adapter}
+    camera_optical_frame: {class: optical, owner: lift_robot_camera_adapter}
+    roarm_base_link: {class: body, owner: lift_robot_roarm_adapter}
+    base_link: {class: vendor_kinematic, owner: roarm_m3_vendor_urdf}
+    hand_tcp: {class: vendor_kinematic, owner: roarm_m3_vendor_urdf}
+    press_contact:
+      class: body
+      owner: lift_robot_tcp_calibration
+      x: "tool forward; align with -panel_outward_normal during approach"
+      contact_surface: stock_end_effector
+      fingertip_installed: false
+    panel_frame:
+      class: body
+      owner: panel_pose_estimator
+      x: "panel outward normal"
+    button_target:
+      class: body
+      owner: target_resolver
+      x: "inherits panel outward normal when represented as TF"
+
+  transforms:
+    - id: map_to_odom
+      parent: map
+      child: odom
+      source: slam_localization
+      mode: dynamic
+      required_for_local_press: false
+    - id: odom_to_cart_base
+      parent: odom
+      child: cart_base
+      source: odometry_localization
+      mode: dynamic
+      required_for_local_press: false
+    - id: cart_base_to_camera_link
+      parent: cart_base
+      child: camera_link
+      source: measured_mount_calibration
+      mode: static
+      required_for_local_press: true
+      status: pending
+      calibration_id: null
+      translation_m: null
+      rotation_xyzw: null
+    - id: camera_link_to_camera_optical_frame
+      parent: camera_link
+      child: camera_optical_frame
+      source: rep_103_convention
+      mode: static
+      required_for_local_press: true
+      status: conventional
+      calibration_id: not_applicable
+      translation_m: [0.0, 0.0, 0.0]
+      rotation_xyzw: [-0.5, 0.5, -0.5, 0.5]
+    - id: cart_base_to_roarm_base_link
+      parent: cart_base
+      child: roarm_base_link
+      source: measured_mount_calibration
+      mode: static
+      required_for_local_press: true
+      status: pending
+      calibration_id: null
+      translation_m: null
+      rotation_xyzw: null
+    - id: roarm_base_link_to_vendor_base_link
+      parent: roarm_base_link
+      child: base_link
+      source: project_vendor_frame_adapter
+      mode: static
+      required_for_local_press: true
+      status: conventional
+      calibration_id: not_applicable
+      translation_m: [0.0, 0.0, 0.0]
+      rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+    - id: vendor_base_link_to_hand_tcp
+      parent: base_link
+      child: hand_tcp
+      source: "RoArm-M3 vendor URDF + measured joint_states + robot_state_publisher"
+      mode: dynamic_kinematic_chain
+      required_for_local_press: true
+      vendor_reference: "RoArm-M3/ros2/roarm_ws/src/roarm_main/roarm_description/urdf/roarm_m3/roarm_m3.xacro"
+    - id: hand_tcp_to_press_contact
+      parent: hand_tcp
+      child: press_contact
+      source: measured_stock_contact_tcp_calibration
+      mode: static
+      required_for_local_press: true
+      status: pending
+      calibration_id: null
+      translation_m: null
+      rotation_xyzw: null
+    - id: camera_optical_frame_to_panel_frame
+      parent: camera_optical_frame
+      child: panel_frame
+      source: synchronized_fiducial_or_depth_plane_estimate
+      mode: runtime_observation
+      required_for_local_press: true
+    - id: panel_frame_to_button_target
+      parent: panel_frame
+      child: button_target
+      source: target_resolver
+      mode: runtime_observation
+      required_for_local_press: true
+
+  sensor_adapters:
+    gemini335:
+      measured_profile:
+        model: Orbbec Gemini 335
+        firmware: "1.4.60"
+        sdk_ros_wrapper: "2.9.3"
+        rgb:
+          topic: /gemini335/color/image_raw
+          encoding: rgb8
+          width_px: 1920
+          height_px: 1080
+          nominal_rate_hz: 30
+          intrinsics: {fx_px: 1041.5015, fy_px: 1042.0002, cx_px: 963.4083, cy_px: 545.3665}
+        aligned_depth:
+          topic: /gemini335/depth/image_raw
+          encoding: 16UC1
+          width_px: 1920
+          height_px: 1080
+          alignment: color
+        unaligned_depth:
+          topic: /gemini335/depth/image_unaligned
+          encoding: 16UC1
+          width_px: 1280
+          height_px: 800
+        depth_scale_m_per_unit: null
+        depth_scale_status: pending
+      raw_topics:
+        rgb_image: /gemini335/color/image_raw
+        rgb_camera_info: /gemini335/color/camera_info
+        aligned_depth_image: /gemini335/depth/image_raw
+        aligned_depth_camera_info: /gemini335/depth/camera_info
+      observed_raw_frame_id: gemini335_color_optical_frame
+      canonical_topics:
+        rgb_image: /lift_robot/camera/color/image_raw
+        rgb_camera_info: /lift_robot/camera/color/camera_info
+        aligned_depth_image: /lift_robot/camera/aligned_depth/image_raw
+        aligned_depth_camera_info: /lift_robot/camera/aligned_depth/camera_info
+      canonical_frame_id: camera_optical_frame
+      normalization: "validate audited Gemini optical input, preserve timestamp/data, then rewrite header.frame_id"
+      optical_axis_validation_status: pending
+      depth_scale_status: pending
+      depth_scale_m_per_unit: null
+      vendor_tf_allowed_for_execution: false
+      integrated_launch_requirement: "set Orbbec publish_tf=false; publish camera_link->camera_optical_frame only; do not publish pending cart_base->camera_link"
+    hp60c:
+      raw_topics:
+        rgb_image: /ascamera_hp60c/camera_publisher/rgb0/image
+        rgb_camera_info: /ascamera_hp60c/camera_publisher/rgb0/camera_info
+        depth_image: /ascamera_hp60c/camera_publisher/depth0/image_raw
+        depth_camera_info: /ascamera_hp60c/camera_publisher/depth0/camera_info
+        point_cloud: /ascamera_hp60c/camera_publisher/depth0/points
+      observed_raw_frame_id: ascamera_hp60c_color_0
+      canonical_frame_id: camera_optical_frame
+      normalization: "validate optical axes, convert depth to m, then rewrite header.frame_id"
+      optical_axis_validation_status: pending
+      depth_scale_status: pending
+      depth_scale_m_per_unit: null
+      vendor_tf_allowed_for_execution: false
+      integrated_launch_requirement: "set ascamera pub_tfTree=false; publish only the canonical project TF tree"
+
+  calibration:
+    execution_enabled: false
+    calibration_id: null
+    # Section B relative extrinsic is accepted offline but does not satisfy the
+    # dual cart_base mount edges required for execution_ready / /tf_static.
+    eye_on_base_relative:
+      status: accepted_unpublished
+      section_b_exit: true
+      dataset_id: gemini335_roarm_20260803_r6
+      method: scipy_separable_absolute
+      calibration_id: gemini335_roarm_20260803_r6__scipy_separable_absolute__b5_tag_gap_250ms_v3
+      bundle_path: config/calibration/accepted/gemini335_roarm_20260803_r6_eye_on_base_relative_bundle.json
+      primary_transform_id: T_roarm_base_link_camera_optical_frame
+      tf_static_published: false
+      topology_closing_path: not_chosen
+    required_static_transform_ids:
+      - cart_base_to_camera_link
+      - cart_base_to_roarm_base_link
+      - hand_tcp_to_press_contact
+    required_component_status:
+      # Legacy key names are retained for v1 validator compatibility; the
+      # active sensor profile above is Gemini 335, not HP60C.
+      hp60c_intrinsics: pending
+      hp60c_rgb_depth_registration: pending
+      hp60c_depth_scale: pending
+      hp60c_optical_axes: pending
+      eye_to_hand: pending
+      roarm_mount: pending
+      stock_contact_tcp: pending
+
+  target_interface:
+    topic: /elevator/button_target
+    message_semantics: "PoseStamped-compatible pose plus outward panel normal and provenance"
+    allowed_pose_frames: [camera_optical_frame, panel_frame]
+    required_fields:
+      - schema_version
+      - coordinate_contract_version
+      - target_id
+      - detection_id
+      - pose.header.frame_id
+      - pose.header.stamp_ns
+      - pose.position_m
+      - pose.orientation_xyzw
+      - panel_outward_normal.frame_id
+      - panel_outward_normal.xyz
+      - source_timestamp_ns
+      - confidence
+      - calibration_id
+      - ttl_ms
+    minimum_confidence: 0.8
+    maximum_ttl_ms: 1000
+    maximum_rgb_depth_skew_ms: 50
+    timestamp_rule: "pose.header.stamp_ns == source_timestamp_ns; transform at that exact observation time"
+    normal_rule: "unit vector in the declared frame, pointing from panel toward camera/cart; target pose local +X must align with it"
+    trajectory_rule: "pre=surface+d_pre*n; press=surface-d_press*n; align press_contact +X with -n"
+
+  prohibitions:
+    - "Never label optical X-right/Y-down/Z-forward data as camera_link."
+    - "Never use the vendor HP60C TF edge in an execution-capable tree."
+    - "Never infer RGB-depth registration from a shared frame_id alone."
+    - "Never use a zero transform as a placeholder for an unmeasured calibration."
+    - "Never accept an empty, unknown, stale, or mismatched calibration_id."
+    - "Never convert through map/odom for local pressing; SLAM is navigation-only."
+    - "Never reuse a button target after cart motion or calibration change."
+    - "Never expose mm, degrees, or unlabelled Euler angles on the target interface."

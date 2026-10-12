@@ -1,0 +1,18 @@
+# Dedicated inert Phase 5 base-sweep profile.
+# This file only raises the base one-command guard to the operator-authorized
+# 90 degrees. It starts without a transport and in dry-run mode; real serial
+# overrides require a separately reviewed launch command.
+roarm_safe_driver:
+  ros__parameters:
+    transport: none
+    serial_port: ""
+    dry_run: true
+    fake_feedback: false
+    joint_speed_steps_s: [34, 17, 17, 23, 34, 17]
+    joint_acc_registers: [1, 1, 1, 1, 1, 1]
+    # base, shoulder, elbow, wrist, roll, gripper
+    joint_max_delta_deg: [90.0, 10.0, 10.0, 15.0, 30.0, 15.0]
+    feedback_timeout_s: 0.5
+    command_timeout_s: 40.0
+    tolerance_deg: 0.5
+    convergence_samples: 20

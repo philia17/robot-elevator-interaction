@@ -1,0 +1,7 @@
+# Default deployment is inert.  This config does not authorize execution and
+# cannot be changed by a Button1 Live request.
+roarm_precontact_adapter:
+  ros__parameters:
+    execution_enabled: false
+    physical_authorized: false
+    release_manifest_json: '{"command_mode":"T101_SINGLE_JOINT_ONLY","execution_enabled":false,"execution_ready":false,"outbound_release_manifest_sha256":"0000000000000000000000000000000000000000000000000000000000000000","outbound_route_artifact":null,"outbound_route_artifact_sha256":"0000000000000000000000000000000000000000000000000000000000000000","release_id":"inert-default","schema":"precontact_execution_release_v2"}'

@@ -1,0 +1,16 @@
+# Dedicated base-only large-sweep diagnostic. Startup remains inert.
+# The code hard ceiling permits 95 degrees only for joint 1; the planned
+# physical target is absolute -90 degrees at the unchanged low speed.
+roarm_safe_driver:
+  ros__parameters:
+    transport: none
+    serial_port: ""
+    dry_run: true
+    fake_feedback: false
+    joint_speed_steps_s: [34, 17, 17, 23, 34, 17]
+    joint_acc_registers: [1, 1, 1, 1, 1, 1]
+    joint_max_delta_deg: [95.0, 2.0, 2.0, 3.0, 5.0, 2.0]
+    feedback_timeout_s: 0.5
+    command_timeout_s: 40.0
+    tolerance_deg: 0.5
+    convergence_samples: 20

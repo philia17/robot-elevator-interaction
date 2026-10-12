@@ -1,0 +1,24 @@
+# Zero-motion Dynamic-IK Prepare.  The request is the exact canonical frozen
+# cart/target/RGB-D/TF/q0 session.  This service owns no motion resource.
+string dynamic_session_json
+string dynamic_session_sha256
+string ui_request_id
+---
+bool accepted
+string authorization_id
+uint32 ttl_ms
+string plan_hash
+string session_id
+string result_code
+string summary_json
+string reason
+string state
+string executor_boot_epoch
+string kinematic_model_hash
+string collision_proxy_hash
+string tool_model_hash
+string template_hash
+string calibration_hash
+uint32 publisher_count
+bool lease_active
+uint32 arm_client_count

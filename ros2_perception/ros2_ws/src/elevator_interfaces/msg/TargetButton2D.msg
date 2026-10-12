@@ -1,0 +1,10 @@
+std_msgs/Header header
+bool valid
+string request_id
+string building_id
+string requested_floor
+string effective_label
+ButtonObservation button
+float32 temporal_confidence
+string status
+string failure_reason

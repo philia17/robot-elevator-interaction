@@ -1,0 +1,9 @@
+std_msgs/Header header
+string overall_status
+float32 input_fps
+float32 detector_latency_ms
+float32 vlm_latency_ms
+uint32 detected_count
+uint32 labeled_count
+string current_state
+string[] warnings

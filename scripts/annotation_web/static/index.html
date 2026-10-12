@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lift Robot · RGB-D Annotation</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">LR</span>
+      <div><strong>RGB-D Annotation</strong><small id="dataset-summary">Loading dataset…</small></div>
+    </div>
+    <div class="top-actions">
+      <span id="save-state" class="save-state idle"><i></i>No changes</span>
+      <button id="btn-prev" class="button ghost" title="Previous image (← / A)">← Previous</button>
+      <span id="position" class="position">0 / 0</span>
+      <button id="btn-next" class="button ghost" title="Next image (→ / D)">Next →</button>
+      <button id="btn-complete" class="button success" title="Mark complete (Enter)">✓ Complete image</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="sidebar sidebar-left">
+      <section>
+        <div class="section-title"><span>Building</span><button id="clear-filters" class="text-button">Clear filters</button></div>
+        <div id="building-filters" class="chip-grid compact"></div>
+      </section>
+      <section>
+        <label class="field-label" for="session-filter">Session</label>
+        <select id="session-filter"><option value="all">All sessions</option></select>
+      </section>
+      <section>
+        <div class="section-title"><span>Annotation status</span></div>
+        <div id="status-filters" class="status-list"></div>
+      </section>
+      <section class="progress-section">
+        <div class="section-title"><span>Filtered progress</span><span id="progress-percent">0%</span></div>
+        <div class="progress-track"><i id="progress-bar"></i></div>
+        <div id="progress-detail" class="muted">0 / 0 complete</div>
+      </section>
+      <section class="item-section">
+        <div class="section-title"><span>Images</span><span id="visible-count" class="badge">0</span></div>
+        <div id="item-list" class="item-list" aria-label="Image list"></div>
+      </section>
+    </aside>
+
+    <section class="viewer-column">
+      <div class="viewer-toolbar">
+        <div class="segmented" role="group" aria-label="Image view">
+          <button class="active" data-view="rgb">RGB</button>
+          <button data-view="depth">Depth preview</button>
+        </div>
+        <span id="image-title" class="image-title">—</span>
+        <span id="item-status" class="status-pill unannotated">Unannotated</span>
+        <div class="toolbar-spacer"></div>
+        <button id="btn-accept-ai" class="button ghost small" title="Accept all AI boxes for this image">Accept AI boxes</button>
+        <button id="btn-clear-ai" class="button ghost small danger-text" title="Remove unconfirmed AI boxes for this image">Clear AI drafts</button>
+        <button id="btn-exclude" class="button danger small">Delete photo</button>
+      </div>
+
+      <div id="canvas-stage" class="canvas-stage">
+        <canvas id="annotation-canvas" aria-label="Image annotation canvas"></canvas>
+        <div id="canvas-empty" class="canvas-message">Loading image…</div>
+        <div class="canvas-help">Drag on empty space to draw · Drag a box to move · Drag handles to resize · <kbd>Del</kbd> to delete</div>
+      </div>
+
+      <div class="box-editor">
+        <div class="box-editor-head">
+          <strong>Bounding boxes <span id="box-count" class="badge">0</span></strong>
+          <span id="selection-hint" class="muted">Select a box to edit its label</span>
+        </div>
+        <div class="label-row">
+          <span class="inline-label">Quick labels</span>
+          <div id="quick-labels" class="quick-labels"></div>
+          <input id="custom-label" type="text" placeholder="Custom label" autocomplete="off">
+          <button id="apply-custom-label" class="button primary small">Apply</button>
+          <button id="toggle-lit" class="button ghost small" title="Toggle illuminated state">Light: off</button>
+          <button id="delete-box" class="button ghost small danger-text">Delete box</button>
+        </div>
+        <div id="box-list" class="box-list"></div>
+      </div>
+    </section>
+
+    <aside class="sidebar sidebar-right">
+      <div class="metadata-heading">
+        <div><strong>Image details</strong><small id="session-name">—</small></div>
+        <button id="btn-bulk" class="button ghost small">Bulk apply</button>
+      </div>
+      <div id="excluded-banner" class="excluded-banner hidden">
+        <span id="excluded-message">RGB and depth images moved to Trash</span><button id="btn-restore" class="button small">Restore</button>
+      </div>
+
+      <section class="meta-group">
+        <label>Building</label>
+        <div id="meta-building" class="choice-grid"></div>
+      </section>
+      <section class="meta-group">
+        <label>Location</label>
+        <div id="meta-location" class="choice-grid three"></div>
+      </section>
+      <section class="meta-group">
+        <label>View angle</label>
+        <div id="meta-view-angle" class="choice-grid three"></div>
+      </section>
+      <section class="meta-group">
+        <label>Fill light</label>
+        <div id="meta-fill-light" class="choice-grid three"></div>
+      </section>
+      <section class="meta-group">
+        <label>Polarizer</label>
+        <div id="meta-polarizer" class="choice-grid three"></div>
+      </section>
+      <section class="meta-group">
+        <label for="camera-model">Camera model</label>
+        <input id="camera-model" list="camera-options" placeholder="e.g. Gemini 335">
+        <datalist id="camera-options">
+          <option value="Gemini 335">
+          <option value="Gemini 2">
+        </datalist>
+      </section>
+      <section class="meta-group distance-card">
+        <label>Distance</label>
+        <div class="distance-auto"><span>Depth-derived value</span><strong id="distance-auto">—</strong></div>
+        <label class="sub-label" for="distance-override">Manual override (cm)</label>
+        <div class="input-suffix"><input id="distance-override" type="number" min="0" step="0.1" placeholder="Leave blank to use the automatic value"><span>cm</span></div>
+        <small id="distance-final" class="muted">Final distance: —</small>
+      </section>
+      <section class="meta-group">
+        <label for="meta-notes">Notes</label>
+        <textarea id="meta-notes" rows="4" placeholder="Record site conditions or issues…"></textarea>
+      </section>
+      <section class="source-meta">
+        <div><span>File</span><code id="source-stem">—</code></div>
+        <div><span>Captured</span><time id="source-time">—</time></div>
+      </section>
+    </aside>
+  </main>
+
+  <dialog id="bulk-dialog">
+    <form method="dialog" id="bulk-form">
+      <div class="dialog-head"><strong>Bulk apply metadata</strong><button value="cancel" class="icon-button" aria-label="Close">×</button></div>
+      <p class="muted">Select only the fields to overwrite. Unselected fields remain unchanged.</p>
+      <div id="bulk-fields" class="bulk-fields"></div>
+      <label class="field-label" for="bulk-scope">Apply to</label>
+      <select id="bulk-scope">
+        <option value="session">Current session</option>
+        <option value="filtered">Current filtered results</option>
+        <option value="following">Current image and following filtered results</option>
+      </select>
+      <div id="bulk-summary" class="dialog-summary">Will affect 0 images</div>
+      <div class="dialog-actions"><button value="cancel" class="button ghost">Cancel</button><button id="confirm-bulk" value="default" class="button primary">Apply</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js?v=20260723-4" defer></script>
+</body>
+</html>

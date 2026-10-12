@@ -1,0 +1,48 @@
+# AGX Orin unified camera + arm host profile.
+# Serial transition authorized by the operator on 2026-07-31 (transport:
+# none/dry_run: true -> serial/false).  The driver remains fail-closed: it
+# never moves without a fresh arm + single joint_target command, and any
+# fault latches disarmed.
+roarm_safe_driver:
+  ros__parameters:
+    transport: none
+    serial_port: /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_REPLACE_DEVICE_ID-if00-port0
+    dry_run: true
+    fake_feedback: false
+    # Obtain one direct T:1051 state at driver startup so torque-recovery has
+    # a measured baseline even when the controller's unsolicited stream has
+    # not started yet.  This is read-only and sends no joint or torque command.
+    request_feedback_once_on_start: true
+    # Keep torque/position monitoring live on controller revisions that do not
+    # continuously publish T:1051 themselves.  T:105 is a read-only request.
+    feedback_poll_hz: 5.0
+    baud_rate: 115200
+    joint_speed_steps_s: [34, 17, 17, 23, 34, 17]
+    joint_acc_registers: [1, 1, 1, 1, 1, 1]
+    joint_max_delta_deg: [5.0, 2.0, 2.0, 3.0, 5.0, 2.0]
+    # Measured AGX T:1051 cadence is about 0.63 s; retain margin above one gap.
+    feedback_timeout_s: 1.0
+    command_timeout_s: 5.0
+    tolerance_deg: 0.5
+    convergence_samples: 20
+    # Project-layer recovery after the vendor controller finishes initialize.
+    # The driver accepts this only from the configured initialize envelope,
+    # then restores normal per-command delta limits immediately.
+    startup_restore_enabled: false  # disabled after 2026-08-03 torque-off fault; re-enable only after diagnosis
+    # Explicit-service gate only; it does not cause any startup movement.
+    manual_standby_return_enabled: true
+    manual_initialize_return_enabled: true
+    # T:102 uses one common speed; 34 is the firmware-supported maximum.
+    # Scoped to the explicit return-to-standby service only.
+    manual_standby_speed_steps_s: 34
+    # Operator-designated standby (newest): press_standby_manual_20260804_preflight.yaml.
+    # Older recorded standbys are archived in config/press/poses/archive/.
+    startup_restore_target_rad: [0.046, -1.1888, 2.3286, 0.4679, -1.5156, 0.0]
+    startup_restore_initialize_rad: [0.0, 0.0, 1.603009923, 0.0, 0.0, -0.00306796141020671]
+    startup_restore_initialize_tolerance_deg: 8.0
+    # One verified T:210 Torque-ON attempt after a firmware torque-switch
+    # dropout.  It leaves the driver disarmed and never resumes a motion.
+    # Explicit Torque-OFF remains authoritative until the operator turns it ON.
+    auto_torque_recovery_enabled: true
+    auto_torque_recovery_delay_s: 1.0
+    auto_torque_recovery_healthy_reset_s: 30.0

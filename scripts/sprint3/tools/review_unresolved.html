@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image-Level Match Correction</title>
+  <style>
+    :root {
+      --bg: #15171b;
+      --panel: #202329;
+      --panel-2: #282c34;
+      --border: #3b414d;
+      --text: #edf0f5;
+      --muted: #a8b0bd;
+      --accent: #2f80ed;
+      --gt: #22c55e;
+      --tp: #22c55e;
+      --fp: #ef4444;
+      --fn: #f59e0b;
+      --ambiguous: #a855f7;
+      --ignore: #9ca3af;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: var(--text);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      margin: 0 8px 0 0;
+      font-size: 15px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    button,
+    select {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      background: var(--panel-2);
+      font-size: 13px;
+      height: 32px;
+    }
+
+    button {
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button:hover:not(:disabled) { filter: brightness(1.12); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    select { padding: 0 8px; min-width: 230px; }
+
+    #progress-text,
+    #status-text,
+    #save-status {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    #status-text {
+      flex: 1;
+      min-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      padding: 7px 14px;
+      background: #1c1f25;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 16px;
+      height: 10px;
+      margin-right: 5px;
+      vertical-align: -1px;
+      border-radius: 2px;
+    }
+
+    .legend .tp i { border: 2px solid var(--tp); }
+    .legend .fp i { border: 2px dashed var(--fp); }
+    .legend .fn i { border: 2px solid var(--fn); }
+    .legend .ambiguous i { border: 2px solid var(--ambiguous); }
+    .legend .ignore i { border: 2px solid var(--ignore); }
+
+    main {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .pane {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: #0e1014;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .pane-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 8px 10px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .pane-title span:last-child {
+      color: var(--muted);
+      font-weight: 450;
+      text-align: right;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      overflow: auto;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      background: #000;
+    }
+
+    #popup {
+      position: absolute;
+      z-index: 10;
+      min-width: 190px;
+      padding: 8px;
+      display: none;
+      background: #f8fafc;
+      color: #111827;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      font-size: 12px;
+    }
+
+    #popup.open { display: block; }
+    #popup-title { margin-bottom: 6px; font-weight: 700; }
+
+    .label-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 7px;
+    }
+
+    #popup button {
+      height: 28px;
+      padding: 0 8px;
+      border-color: #cbd5e1;
+      color: #111827;
+      background: #fff;
+    }
+
+    #popup button:hover { background: #e5e7eb; }
+
+    .reason-row {
+      display: none;
+      gap: 5px;
+      align-items: center;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 7px;
+    }
+
+    .reason-row.open { display: grid; }
+
+    #reason-select {
+      width: 100%;
+      min-width: 0;
+      height: 28px;
+      color: #111827;
+      background: #fff;
+      border-color: #cbd5e1;
+      font-size: 12px;
+    }
+
+    #close-popup {
+      width: 100%;
+      margin-top: 7px;
+      color: #475569;
+    }
+
+    input[type="file"] { display: none; }
+
+    @media (max-width: 1000px) {
+      body { overflow: auto; }
+      main {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
+      .pane { min-height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Image Match Review</h1>
+    <button id="load-report" class="primary">Open report</button>
+    <button id="load-gt-dir">Select GT dir</button>
+    <button id="prev-image">Previous image</button>
+    <button id="next-image">Next image</button>
+    <span id="progress-text">image - / -</span>
+    <select id="image-select" disabled aria-label="Jump to image"></select>
+    <span id="status-text">Open auto_match_report.json to begin.</span>
+    <span id="save-status"></span>
+  </header>
+
+  <div class="legend">
+    <span class="tp"><i></i>TP</span>
+    <span class="fp"><i></i>FP</span>
+    <span class="fn"><i></i>FN missed GT</span>
+    <span class="ambiguous"><i></i>ambiguous</span>
+    <span class="ignore"><i></i>ignore</span>
+  </div>
+
+  <main>
+    <section class="pane">
+      <div class="pane-title">
+        <span>Ground truth overlay</span>
+        <span>Green boxes are GT indices</span>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="gt-canvas"></canvas>
+      </div>
+    </section>
+
+    <section class="pane">
+      <div class="pane-title">
+        <span>Detector output overlay</span>
+        <span>Click a right-pane box to override its label</span>
+      </div>
+      <div class="canvas-wrap" id="review-wrap">
+        <canvas id="review-canvas"></canvas>
+        <div id="popup" role="dialog" aria-label="Set human label">
+          <div id="popup-title"></div>
+          <div class="label-grid" id="label-buttons"></div>
+          <div class="reason-row" id="reason-row">
+            <select id="reason-select" aria-label="Optional reason">
+              <option value="">reason (optional)</option>
+              <option value="dark">dark</option>
+              <option value="reflection">reflection</option>
+              <option value="panel_edge">panel_edge</option>
+              <option value="display">display</option>
+              <option value="edge">edge</option>
+              <option value="too_small">too_small</option>
+              <option value="too_big">too_big</option>
+              <option value="shifted">shifted</option>
+              <option value="icon">icon</option>
+              <option value="occluded">occluded</option>
+              <option value="other">other</option>
+            </select>
+          </div>
+          <button id="close-popup">Close</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <input type="file" id="report-input" accept=".json,application/json">
+  <input type="file" id="gt-dir-input" webkitdirectory multiple>
+
+  <script>
+  const LABELS = ["tp", "fp", "fn", "ambiguous", "ignore"];
+  const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp"];
+  const GT_DIR_REL = "../../../datasets/ground_truth/";
+  const IMAGE_DIR_REL = "../../../datasets/ground_truth/images/";
+
+  const styles = {
+    tp: { color: "#22c55e", dash: [], lineWidth: 2, fill: "rgba(34, 197, 94, 0.10)" },
+    fp: { color: "#ef4444", dash: [8, 5], lineWidth: 2, fill: "rgba(239, 68, 68, 0.08)" },
+    fn: { color: "#f59e0b", dash: [], lineWidth: 3, fill: "rgba(245, 158, 11, 0.10)" },
+    ambiguous: { color: "#a855f7", dash: [], lineWidth: 3, fill: "rgba(168, 85, 247, 0.12)" },
+    ignore: { color: "#9ca3af", dash: [5, 5], lineWidth: 2, fill: "rgba(156, 163, 175, 0.10)" },
+  };
+
+  const gtCanvas = document.getElementById("gt-canvas");
+  const gtCtx = gtCanvas.getContext("2d");
+  const reviewCanvas = document.getElementById("review-canvas");
+  const reviewCtx = reviewCanvas.getContext("2d");
+  const popup = document.getElementById("popup");
+  const labelButtons = document.getElementById("label-buttons");
+  const reasonRow = document.getElementById("reason-row");
+  const reasonSelect = document.getElementById("reason-select");
+  const imageSelect = document.getElementById("image-select");
+
+  let report = null;
+  let reportFileHandle = null;
+  let canWriteReport = false;
+  let stems = [];
+  let currentIndex = 0;
+  let currentGt = null;
+  let currentImage = null;
+  let imageCache = new Map();
+  let gtCache = new Map();
+  let gtFileMap = new Map();
+  let gtDirHandle = null;
+  let hitItems = [];
+  let selectedItem = null;
+
+  function setStatus(message) {
+    document.getElementById("status-text").textContent = message;
+  }
+
+  function setSaveStatus(message) {
+    document.getElementById("save-status").textContent = message;
+  }
+
+  function reviewedAt() {
+    return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  }
+
+  function fileName(path) {
+    return path.replace(/\\/g, "/").split("/").pop();
+  }
+
+  function toUrl(relativePath) {
+    return new URL(relativePath, window.location.href).href;
+  }
+
+  function indexDirectoryFiles(files) {
+    const map = new Map();
+    for (const file of files) {
+      const rel = (file.webkitRelativePath || file.name).replace(/\\/g, "/");
+      map.set(rel, file);
+      map.set(fileName(rel), file);
+    }
+    return map;
+  }
+
+  async function loadJsonFromUrl(url) {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    return response.json();
+  }
+
+  async function loadGtFromDirectory(stem) {
+    if (gtDirHandle) {
+      const handle = await gtDirHandle.getFileHandle(`${stem}_gt.json`);
+      const file = await handle.getFile();
+      return JSON.parse(await file.text());
+    }
+
+    const file = gtFileMap.get(`${stem}_gt.json`);
+    if (file) return JSON.parse(await file.text());
+
+    throw new Error(`GT JSON not found for ${stem}`);
+  }
+
+  async function loadGt(stem) {
+    if (gtCache.has(stem)) return gtCache.get(stem);
+
+    let payload = null;
+    try {
+      payload = await loadJsonFromUrl(toUrl(`${GT_DIR_REL}${stem}_gt.json`));
+    } catch (err) {
+      payload = await loadGtFromDirectory(stem);
+    }
+
+    gtCache.set(stem, payload);
+    return payload;
+  }
+
+  function loadImageElement(src, stem) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error(`Image load failed for ${stem}`));
+      image.src = src;
+    });
+  }
+
+  async function loadImageFromDirectory(stem) {
+    if (gtDirHandle) {
+      const imagesDir = await gtDirHandle.getDirectoryHandle("images");
+      for (const ext of IMAGE_EXTS) {
+        try {
+          const handle = await imagesDir.getFileHandle(`${stem}${ext}`);
+          const file = await handle.getFile();
+          const url = URL.createObjectURL(file);
+          const image = await loadImageElement(url, stem);
+          URL.revokeObjectURL(url);
+          return image;
+        } catch (err) {
+          /* Try the next extension. */
+        }
+      }
+    }
+
+    for (const ext of IMAGE_EXTS) {
+      const file = gtFileMap.get(`images/${stem}${ext}`) || gtFileMap.get(`${stem}${ext}`);
+      if (file) {
+        const url = URL.createObjectURL(file);
+        const image = await loadImageElement(url, stem);
+        URL.revokeObjectURL(url);
+        return image;
+      }
+    }
+
+    throw new Error(`Image not found for ${stem}`);
+  }
+
+  async function loadImage(stem) {
+    if (imageCache.has(stem)) return imageCache.get(stem);
+
+    let image = null;
+    for (const ext of IMAGE_EXTS) {
+      try {
+        image = await loadImageElement(toUrl(`${IMAGE_DIR_REL}${stem}${ext}`), stem);
+        break;
+      } catch (err) {
+        image = null;
+      }
+    }
+
+    if (!image) image = await loadImageFromDirectory(stem);
+    imageCache.set(stem, image);
+    return image;
+  }
+
+  function fitCanvas(canvas, image) {
+    const wrap = canvas.parentElement;
+    const maxWidth = Math.max(1, wrap.clientWidth - 20);
+    const maxHeight = Math.max(1, wrap.clientHeight - 20);
+    const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    return scale;
+  }
+
+  function drawBase(canvas, ctx, image) {
+    const scale = fitCanvas(canvas, image);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return scale;
+  }
+
+  function drawLabel(ctx, x, y, label, color) {
+    ctx.save();
+    ctx.font = "12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.textBaseline = "top";
+    const padding = 4;
+    const width = Math.ceil(ctx.measureText(label).width) + padding * 2;
+    const height = 18;
+    const boxX = Math.max(0, x);
+    const boxY = Math.max(0, y - height - 2);
+    ctx.fillStyle = color;
+    ctx.fillRect(boxX, boxY, width, height);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(label, boxX + padding, boxY + 3);
+    ctx.restore();
+  }
+
+  function drawBox(ctx, bbox, scale, style, label) {
+    const [x1, y1, x2, y2] = bbox.map(v => Number(v) * scale);
+    const w = x2 - x1;
+    const h = y2 - y1;
+    ctx.save();
+    ctx.lineWidth = style.lineWidth;
+    ctx.strokeStyle = style.color;
+    ctx.fillStyle = style.fill;
+    ctx.setLineDash(style.dash || []);
+    if (style.fill) ctx.fillRect(x1, y1, w, h);
+    ctx.strokeRect(x1, y1, w, h);
+    ctx.restore();
+    if (label) drawLabel(ctx, x1, y1, label, style.color);
+    return { x1, y1, x2, y2 };
+  }
+
+  function autoLabelForList(listKey) {
+    if (listKey === "tp") return "tp";
+    if (listKey === "fp") return "fp";
+    return "fn";
+  }
+
+  function effectiveLabel(item) {
+    const label = item.entry.human_label || item.autoLabel;
+    return LABELS.includes(label) ? label : item.autoLabel;
+  }
+
+  function displayLabel(item, label) {
+    if (label === "fp") return item.entry.pred_id || "FP";
+    if (label === "fn") return "FN";
+    if (label === "tp") return item.entry.pred_id ? `TP ${item.entry.pred_id}` : "TP";
+    return label;
+  }
+
+  function collectReviewItems(imageData) {
+    const items = [];
+    for (const listKey of ["tp", "fp", "fn"]) {
+      const entries = imageData[listKey] || [];
+      for (let index = 0; index < entries.length; index++) {
+        const entry = entries[index];
+        const bbox = listKey === "fn" ? entry.gt_bbox : (entry.prediction_bbox || entry.gt_bbox);
+        if (!bbox) continue;
+        items.push({
+          listKey,
+          index,
+          entry,
+          bbox,
+          autoLabel: autoLabelForList(listKey),
+        });
+      }
+    }
+    return items;
+  }
+
+  function drawGroundTruthPane() {
+    const scale = drawBase(gtCanvas, gtCtx, currentImage);
+    const boxes = currentGt.ground_truth || [];
+    for (let index = 0; index < boxes.length; index++) {
+      const bbox = boxes[index].bbox_xyxy;
+      if (!bbox) continue;
+      drawBox(gtCtx, bbox, scale, styles.tp, `GT ${index}`);
+    }
+  }
+
+  function drawReviewPane() {
+    const scale = drawBase(reviewCanvas, reviewCtx, currentImage);
+    const imageData = report.per_image[stems[currentIndex]];
+    hitItems = [];
+
+    for (const item of collectReviewItems(imageData)) {
+      const label = effectiveLabel(item);
+      const style = styles[label] || styles[item.autoLabel];
+      const rect = drawBox(reviewCtx, item.bbox, scale, style, displayLabel(item, label));
+      hitItems.push({ ...item, rect });
+    }
+  }
+
+  async function renderCurrentImage() {
+    if (!report || !stems.length) return;
+    closePopup();
+
+    const stem = stems[currentIndex];
+    document.getElementById("progress-text").textContent =
+      `image ${currentIndex + 1} / ${stems.length}`;
+    imageSelect.value = stem;
+    document.getElementById("prev-image").disabled = currentIndex <= 0;
+    document.getElementById("next-image").disabled = currentIndex >= stems.length - 1;
+    setStatus(`Viewing ${stem}`);
+
+    try {
+      [currentImage, currentGt] = await Promise.all([loadImage(stem), loadGt(stem)]);
+      drawGroundTruthPane();
+      drawReviewPane();
+    } catch (err) {
+      gtCtx.clearRect(0, 0, gtCanvas.width, gtCanvas.height);
+      reviewCtx.clearRect(0, 0, reviewCanvas.width, reviewCanvas.height);
+      setStatus(`Could not load assets for ${stem}: ${err.message}. Select datasets/ground_truth/ if needed.`);
+    }
+  }
+
+  function populateImageSelect() {
+    imageSelect.innerHTML = "";
+    for (const stem of stems) {
+      const option = document.createElement("option");
+      option.value = stem;
+      option.textContent = stem;
+      imageSelect.appendChild(option);
+    }
+    imageSelect.disabled = stems.length === 0;
+  }
+
+  function initReport(payload) {
+    report = payload;
+    stems = Object.keys(report.per_image || {}).sort();
+    currentIndex = 0;
+    imageCache.clear();
+    gtCache.clear();
+    populateImageSelect();
+    setSaveStatus(canWriteReport ? "Writable" : "Read-only");
+    if (!stems.length) {
+      setStatus("Report has no per_image entries.");
+      return;
+    }
+    renderCurrentImage();
+  }
+
+  async function saveReport() {
+    if (!report || !reportFileHandle || !canWriteReport) {
+      setSaveStatus("Read-only");
+      return;
+    }
+
+    const writable = await reportFileHandle.createWritable();
+    await writable.write(JSON.stringify(report, null, 2) + "\n");
+    await writable.close();
+    setSaveStatus(`Saved ${new Date().toLocaleTimeString()}`);
+  }
+
+  async function applyHumanLabel(label) {
+    if (!selectedItem) return;
+    selectedItem.entry.human_label = label;
+    selectedItem.entry.reviewed_at = reviewedAt();
+    await saveReport();
+    drawReviewPane();
+    showPopupForItem(selectedItem, selectedItem.popupX, selectedItem.popupY, true);
+  }
+
+  async function applyHumanReason(reason) {
+    if (!selectedItem) return;
+    if (reason) {
+      selectedItem.entry.human_reason = reason;
+    } else {
+      delete selectedItem.entry.human_reason;
+    }
+    selectedItem.entry.reviewed_at = reviewedAt();
+    await saveReport();
+  }
+
+  function closePopup() {
+    popup.classList.remove("open");
+    reasonRow.classList.remove("open");
+    selectedItem = null;
+  }
+
+  function showPopupForItem(item, x, y, showReason) {
+    selectedItem = item;
+    selectedItem.popupX = x;
+    selectedItem.popupY = y;
+    document.getElementById("popup-title").textContent =
+      `${item.listKey.toUpperCase()} entry ${item.index + 1} -> ${effectiveLabel(item).toUpperCase()}`;
+
+    labelButtons.innerHTML = "";
+    for (const label of LABELS) {
+      const button = document.createElement("button");
+      button.textContent = label.toUpperCase();
+      button.addEventListener("click", () => {
+        applyHumanLabel(label).catch(err => setStatus(`Save failed: ${err.message}`));
+      });
+      labelButtons.appendChild(button);
+    }
+
+    reasonSelect.value = item.entry.human_reason || "";
+    reasonRow.classList.toggle("open", Boolean(showReason));
+    popup.style.left = `${x}px`;
+    popup.style.top = `${y}px`;
+    popup.classList.add("open");
+  }
+
+  function canvasPoint(event, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY,
+      cssX: event.clientX - canvas.parentElement.getBoundingClientRect().left,
+      cssY: event.clientY - canvas.parentElement.getBoundingClientRect().top,
+    };
+  }
+
+  function hitTest(point) {
+    for (let i = hitItems.length - 1; i >= 0; i--) {
+      const item = hitItems[i];
+      const { x1, y1, x2, y2 } = item.rect;
+      if (point.x >= x1 && point.x <= x2 && point.y >= y1 && point.y <= y2) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  async function openReportWithFileSystemAccess() {
+    const [handle] = await window.showOpenFilePicker({
+      multiple: false,
+      types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+    });
+    reportFileHandle = handle;
+    const permission = await handle.requestPermission({ mode: "readwrite" });
+    canWriteReport = permission === "granted";
+    const file = await handle.getFile();
+    initReport(JSON.parse(await file.text()));
+  }
+
+  function openReportFallback() {
+    reportFileHandle = null;
+    canWriteReport = false;
+    document.getElementById("report-input").click();
+  }
+
+  async function pickGtDirectoryIfNeeded() {
+    if (window.showDirectoryPicker) {
+      gtDirHandle = await window.showDirectoryPicker({ mode: "read" });
+      gtFileMap = new Map();
+      gtCache.clear();
+      imageCache.clear();
+      await renderCurrentImage();
+      return;
+    }
+    document.getElementById("gt-dir-input").click();
+  }
+
+  document.getElementById("load-report").addEventListener("click", () => {
+    const load = window.showOpenFilePicker ? openReportWithFileSystemAccess : openReportFallback;
+    load().catch(err => {
+      if (err && err.name === "AbortError") return;
+      setStatus(`Open failed: ${err.message || err}`);
+    });
+  });
+
+  document.getElementById("load-gt-dir").addEventListener("click", () => {
+    pickGtDirectoryIfNeeded().catch(err => {
+      if (err && err.name === "AbortError") return;
+      setStatus(`GT directory load failed: ${err.message || err}`);
+    });
+  });
+
+  document.getElementById("report-input").addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    initReport(JSON.parse(await file.text()));
+    event.target.value = "";
+  });
+
+  document.getElementById("gt-dir-input").addEventListener("change", async event => {
+    gtFileMap = indexDirectoryFiles([...event.target.files]);
+    gtDirHandle = null;
+    gtCache.clear();
+    imageCache.clear();
+    event.target.value = "";
+    await renderCurrentImage();
+  });
+
+  document.getElementById("prev-image").addEventListener("click", () => {
+    if (currentIndex > 0) {
+      currentIndex -= 1;
+      renderCurrentImage();
+    }
+  });
+
+  document.getElementById("next-image").addEventListener("click", () => {
+    if (currentIndex < stems.length - 1) {
+      currentIndex += 1;
+      renderCurrentImage();
+    }
+  });
+
+  imageSelect.addEventListener("change", () => {
+    const index = stems.indexOf(imageSelect.value);
+    if (index >= 0) {
+      currentIndex = index;
+      renderCurrentImage();
+    }
+  });
+
+  reviewCanvas.addEventListener("click", event => {
+    const point = canvasPoint(event, reviewCanvas);
+    const item = hitTest(point);
+    if (!item) {
+      closePopup();
+      return;
+    }
+
+    const wrap = reviewCanvas.parentElement;
+    const maxLeft = Math.max(8, wrap.clientWidth - 210);
+    const maxTop = Math.max(8, wrap.clientHeight - 190);
+    showPopupForItem(
+      item,
+      Math.min(maxLeft, point.cssX + 10),
+      Math.min(maxTop, point.cssY + 10),
+      Boolean(item.entry.human_label)
+    );
+  });
+
+  reasonSelect.addEventListener("change", () => {
+    applyHumanReason(reasonSelect.value).catch(err => setStatus(`Save failed: ${err.message}`));
+  });
+
+  document.getElementById("close-popup").addEventListener("click", closePopup);
+
+  window.addEventListener("resize", () => {
+    if (currentImage && currentGt) {
+      drawGroundTruthPane();
+      drawReviewPane();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.target.matches("input, select, textarea")) return;
+    if (event.key === "ArrowLeft" && currentIndex > 0) {
+      event.preventDefault();
+      currentIndex -= 1;
+      renderCurrentImage();
+    }
+    if (event.key === "ArrowRight" && currentIndex < stems.length - 1) {
+      event.preventDefault();
+      currentIndex += 1;
+      renderCurrentImage();
+    }
+    if (event.key === "Escape") closePopup();
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+vlm_labeler_node:
+  ros__parameters:
+    backend: "mock"
+    model_path: ""
+    mmproj_path: ""
+    detections_topic: "/elevator/button_detections"
+    semantics_topic: "/elevator/button_semantics"

@@ -1,0 +1,18 @@
+# Prepare one exact, segmented reverse route from completed PRE to Standard Standby.
+# This service is strictly zero-motion and creates no command resource.
+string ui_request_id
+---
+bool accepted
+string authorization_id
+uint32 ttl_ms
+string plan_hash
+string session_id
+string result_code
+string summary_json
+string reason
+string state
+uint32 waypoint_count
+bool already_at_standby
+uint32 publisher_count
+bool lease_active
+uint32 arm_client_count

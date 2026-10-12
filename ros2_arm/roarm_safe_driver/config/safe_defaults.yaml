@@ -1,0 +1,20 @@
+roarm_safe_driver:
+  ros__parameters:
+    # Startup is inert: no hardware port opens with these defaults.
+    transport: none
+    serial_port: ""
+    dry_run: true
+    fake_feedback: false
+    baud_rate: 115200
+    # URDF order: base, shoulder, elbow, wrist, roll, gripper.
+    # 4096 steps/rev: 34/23/17 steps/s are nominally 2.99/2.02/1.49 deg/s.
+    joint_speed_steps_s: [34, 17, 17, 23, 34, 17]
+    # Raw ST3235 acceleration registers: 1 unit = 100 encoder steps/s^2.
+    # Zero selects maximum acceleration and is rejected.
+    joint_acc_registers: [1, 1, 1, 1, 1, 1]
+    # Hard per-joint single-command ceilings in degrees.
+    joint_max_delta_deg: [5.0, 2.0, 2.0, 3.0, 5.0, 2.0]
+    feedback_timeout_s: 0.5
+    command_timeout_s: 5.0
+    tolerance_deg: 0.5
+    convergence_samples: 20

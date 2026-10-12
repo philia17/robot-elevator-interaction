@@ -1,0 +1,35 @@
+bool estimate_valid
+bool provenance_complete
+string failure_reason
+
+float64 surface_point_x_m
+float64 surface_point_y_m
+float64 surface_point_z_m
+float64[9] surface_point_covariance_m2
+
+float64 panel_outward_normal_x
+float64 panel_outward_normal_y
+float64 panel_outward_normal_z
+float64 normal_angular_uncertainty_rad
+
+float64 plane_rms_residual_m
+uint32 plane_sample_count
+uint32 plane_inlier_count
+float64 plane_inlier_ratio
+
+string geometry_method_id
+string geometry_scope
+string depth_sample_source
+uint64 camera_info_stamp_ns
+string camera_info_sha256
+string source_frame_id
+string canonical_frame_id
+string raw_to_canonical_alias_id
+string raw_to_canonical_alias_status
+string raw_to_canonical_adapter_sha256
+string section_b_calibration_id
+string camera_optical_axis_status
+string rgb_depth_registration_id
+string rgb_depth_registration_status
+float64 depth_scale_m_per_unit
+string depth_scale_status

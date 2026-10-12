@@ -1,0 +1,15 @@
+# Inert Phase 2C single-joint characterization profile. Never production use.
+roarm_safe_driver:
+  ros__parameters:
+    transport: none
+    serial_port: ""
+    dry_run: true
+    fake_feedback: false
+    joint_speed_steps_s: [34, 17, 17, 23, 34, 17]
+    joint_acc_registers: [1, 1, 1, 1, 1, 1]
+    # base, shoulder, elbow, wrist, roll, gripper
+    joint_max_delta_deg: [5.0, 10.0, 10.0, 15.0, 30.0, 15.0]
+    feedback_timeout_s: 0.5
+    command_timeout_s: 40.0
+    tolerance_deg: 0.5
+    convergence_samples: 20

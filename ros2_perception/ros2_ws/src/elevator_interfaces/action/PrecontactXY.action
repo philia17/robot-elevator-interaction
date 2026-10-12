@@ -1,0 +1,41 @@
+# QC-only exact Move for one already-prepared post-PRE no-contact tangent
+# alignment. Planning/measurement belongs to PreparePrecontactXY.srv. This
+# goal carries no pixels, candidate joints, measurement, or plan JSON; the
+# executor resolves the exact prepared authorization and immutable plan hash.
+# Exact operation value: APPLY_ONE_XY.
+string operation
+string authorization_id
+string alignment_id
+string arrival_receipt_id
+string alignment_plan_sha256
+string confirmation_token
+---
+bool accepted
+string code
+string state
+string alignment_id
+string arrival_receipt_id
+string alignment_plan_sha256
+float64[6] terminal_measured_q_rad
+uint64 terminal_feedback_stamp_ns
+float64[6] endpoint_error_rad
+float64 maximum_endpoint_error_rad
+string progress_code
+bool teardown_complete
+uint32 terminal_joint_target_publishers
+bool terminal_precontact_lease_active
+bool terminal_armed
+string terminal_resources_json
+string executor_instance_id
+---
+string state
+string stage
+string alignment_id
+string arrival_receipt_id
+string session_id
+string alignment_plan_sha256
+uint32 waypoint_index
+uint32 waypoint_count
+float64 progress_ratio
+string gate
+float64 maximum_endpoint_error_rad

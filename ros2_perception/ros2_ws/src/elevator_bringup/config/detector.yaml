@@ -1,0 +1,12 @@
+button_detector_node:
+  ros__parameters:
+    backend: "yolo"
+    model_path: "/home/robot/models/v6/model/best.pt"
+    confidence_threshold: 0.30
+    device: 0
+    imgsz: 640
+    iou_threshold: 0.70
+    max_det: 300
+    input_topic: "/elevator/selected_frame"
+    detections_topic: "/elevator/button_detections"
+    som_image_topic: "/elevator/som_image"

@@ -1,0 +1,15 @@
+# Copy this file to elevator_buttons_seg.yaml after preparing a dataset.
+path: D:/yolo/dataset/elevator_buttons
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: floor_button
+  1: door_open
+  2: door_close
+  3: alarm
+  4: call_up
+  5: call_down
+  6: emergency
+  7: other_button

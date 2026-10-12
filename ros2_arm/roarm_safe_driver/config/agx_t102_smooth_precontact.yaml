@@ -1,0 +1,32 @@
+roarm_safe_driver:
+  ros__parameters:
+    transport: none
+    serial_port: /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_REPLACE_DEVICE_ID-if00-port0
+    dry_run: true
+    fake_feedback: false
+    request_feedback_once_on_start: true
+    feedback_poll_hz: 5.0
+    baud_rate: 115200
+    joint_speed_steps_s: [34, 17, 17, 23, 34, 17]
+    joint_acc_registers: [10, 10, 10, 10, 10, 10]
+    joint_max_delta_deg: [5.0, 10.0, 10.0, 15.0, 30.0, 15.0]
+    feedback_timeout_s: 1.0
+    command_timeout_s: 12.0
+    tolerance_deg: 1.0
+    convergence_samples: 20
+    # Release-only override lives under temp/ and must be removed after the
+    # supervised Dynamic session.  Repository/default startup stays inert.
+    dynamic_exact_pid_boost_enabled: false
+    # Dedicated disabled-by-launch-choice smooth-demo endpoint.  This is the
+    # quantized 70 mm fallback: 60 mm cannot satisfy four-anchor caps plus the
+    # <=0.85 projected-progress replacement gate without a fifth anchor.
+    coarse_precontact_enabled: true
+    coarse_precontact_endpoint_rad: [0.197883521637, -0.615126295942, 2.052466294191, -0.098174770425, -1.484893402673, 0.001533980788]
+    startup_restore_enabled: false
+    manual_standby_return_enabled: true
+    manual_initialize_return_enabled: false
+    manual_standby_speed_steps_s: 34
+    startup_restore_target_rad: [0.046, -1.1888, 2.3286, 0.4679, -1.5156, 0.0]
+    startup_restore_initialize_rad: [0.0, 0.0, 1.603009923, 0.0, 0.0, -0.00306796141020671]
+    startup_restore_initialize_tolerance_deg: 8.0
+    auto_torque_recovery_enabled: false

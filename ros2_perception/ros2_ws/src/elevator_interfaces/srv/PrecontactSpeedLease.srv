@@ -1,0 +1,12 @@
+# Single-owner, non-replayable speed lease for exactly one supervised
+# outbound-only T102 precontact trial.  The request carries NO speed: the
+# safe driver applies its fixed 34-steps/s precontact profile when
+# enable=true and restores the exact captured profile on release with the
+# same purpose/lease identity.
+bool enable
+string purpose
+string lease_id
+---
+bool success
+string message
+bool active

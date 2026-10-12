@@ -1,0 +1,75 @@
+frame_gate_node:
+  ros__parameters:
+    source_type: "topic"
+    image_topic: "/lift_robot/camera/color/image_raw"
+    input_topic: ""
+    qos_reliability: "best_effort"
+    qos_durability: "volatile"
+    queue_depth: 10
+    selected_frame_topic: "/elevator/selected_frame"
+    frame_status_topic: "/elevator/frame_status"
+    output_width: 640
+    output_height: 480
+    min_sharpness: 10.0
+    min_brightness: 20.0
+    max_brightness: 235.0
+    max_motion: 50.0
+    min_interval_sec: 0.1
+
+observation_fusion_node:
+  ros__parameters:
+    detector_weight: 0.5
+    semantic_weight: 0.5
+
+target_resolver_node:
+  ros__parameters:
+    minimum_confidence: 0.5
+
+temporal_tracker_node:
+  ros__parameters:
+    required_confirmations: 2
+    history_size: 5
+    minimum_iou: 0.5
+    maximum_center_distance: 20.0
+    minimum_candidate_confidence: 0.5
+
+perception_manager_node:
+  ros__parameters:
+    action_name: "/elevator/recognize_target_button"
+    maximum_action_timeout_sec: 120.0
+    feedback_period_sec: 0.1
+    task_context_topic: "/elevator/task_context"
+    task_state_topic: "/elevator/task_state"
+    frame_status_topic: "/elevator/frame_status"
+    detections_topic: "/elevator/button_detections"
+    semantics_topic: "/elevator/button_semantics"
+    observations_topic: "/elevator/button_observations"
+    candidate_topic: "/elevator/target_candidate"
+    target_topic: "/elevator/target_button"
+
+visualization_node:
+  ros__parameters:
+    enabled: true
+    input_image_topic: "/elevator/selected_frame"
+    detections_topic: "/elevator/button_detections"
+    observations_topic: "/elevator/button_observations"
+    candidate_topic: "/elevator/target_candidate"
+    target_topic: "/elevator/target_button"
+    task_state_topic: "/elevator/task_state"
+    debug_image_topic: "/elevator/debug_image"
+
+diagnostics_node:
+  ros__parameters:
+    enabled: true
+    publish_period_sec: 1.0
+    history_size: 30
+    stale_frame_sec: 2.5
+    frame_status_topic: "/elevator/frame_status"
+    detections_topic: "/elevator/button_detections"
+    semantics_topic: "/elevator/button_semantics"
+    observations_topic: "/elevator/button_observations"
+    target_topic: "/elevator/target_button"
+    task_context_topic: "/elevator/task_context"
+    task_state_topic: "/elevator/task_state"
+    health_topic: "/elevator/perception_health"
+    diagnostics_topic: "/diagnostics"

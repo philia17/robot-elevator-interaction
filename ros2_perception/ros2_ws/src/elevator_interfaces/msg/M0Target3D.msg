@@ -1,0 +1,16 @@
+std_msgs/Header header
+bool perception_ready
+string target_label
+string effective_label
+uint32 matching_label_count
+string detection_id
+string semantic_track_id
+string semantic_status
+float32 semantic_age_sec
+uint32 confirmation_count
+uint32 required_confirmations
+float32 position_spread_m
+ButtonObservation3D observation
+string status
+string failure_reason
+bool motion_authorized

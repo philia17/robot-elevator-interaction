@@ -1,0 +1,27 @@
+# One explicit Stage-B 70 mm positional contact-approach OUT+BACK action.  The goal carries only
+# immutable plan identity and an exact confirmation token.  It deliberately
+# contains no joint vector, geometry, stroke, force target, pixels, or arbitrary JSON.
+string plan_hash
+string stage_a_receipt_sha256
+string authorization_id
+string confirmation_token
+---
+bool success
+string terminal_code
+string terminal_reason
+string state
+string plan_hash
+string stage_a_receipt_sha256
+bool teardown_complete
+uint32 terminal_joint_target_publishers
+bool terminal_precontact_lease_active
+bool terminal_armed
+float64 endpoint_max_joint_error_rad
+float64 terminal_feedback_age_s
+---
+string state
+string phase
+uint32 waypoint_index
+uint32 waypoint_count
+string plan_hash
+string stage_a_receipt_sha256

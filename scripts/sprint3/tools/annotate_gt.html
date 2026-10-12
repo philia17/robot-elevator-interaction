@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GT Button Annotation</title>
+  <style>
+    :root {
+      --bg: #1a1a1e;
+      --panel: #25252b;
+      --border: #3a3a44;
+      --text: #e8e8ec;
+      --muted: #9a9aa8;
+      --floor: #3b82f6;
+      --door: #22c55e;
+      --call: #f97316;
+      --alarm: #ef4444;
+      --other: #9ca3af;
+      --draw: #a78bfa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    button {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.1); }
+    button.secondary { background: #4b5563; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #progress { font-weight: 600; min-width: 72px; }
+    #status-msg { color: var(--muted); font-size: 13px; flex: 1; }
+    #image-name { color: var(--muted); font-size: 12px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+    #canvas-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow: auto;
+      position: relative;
+    }
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      background: #000;
+    }
+    canvas.draw-mode { cursor: crosshair; }
+    canvas.browse-mode { cursor: default; }
+    aside {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      padding: 14px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    aside h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin: 16px 0 8px;
+    }
+    aside h2:first-child { margin-top: 0; }
+    .meta-row { margin: 4px 0; }
+    .meta-label { color: var(--muted); }
+    .box-list { list-style: none; padding: 0; margin: 0; }
+    .box-list li {
+      padding: 6px 8px;
+      margin: 4px 0;
+      background: #1f1f24;
+      border-radius: 4px;
+      font-size: 12px;
+      border-left: 3px solid var(--other);
+    }
+    .box-list li.type-floor_button_candidate { border-left-color: var(--floor); }
+    .box-list li.type-door_button_candidate { border-left-color: var(--door); }
+    .box-list li.type-call_button_candidate { border-left-color: var(--call); }
+    .box-list li.type-button_candidate,
+    .box-list li.type-alarm { border-left-color: var(--alarm); }
+    .box-list li.selected {
+      outline: 2px solid #f8fafc;
+      background: #2f3440;
+    }
+    kbd {
+      background: #111;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+    }
+    .hint { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .mode-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #374151;
+    }
+    .mode-badge.active { background: var(--draw); color: #fff; }
+    #label-panel {
+      display: none;
+      position: absolute;
+      z-index: 50;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      min-width: 200px;
+      max-width: 340px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+    }
+    .label-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .label-actions button {
+      padding: 4px 9px;
+      min-width: 34px;
+      border-radius: 4px;
+      background: #4b5563;
+      font-size: 13px;
+    }
+    .label-actions button.active {
+      background: #facc15;
+      color: #111827;
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.75);
+    }
+    .label-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .label-buttons button {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 4px;
+      min-width: 30px;
+      line-height: 1.3;
+    }
+    #label-custom {
+      width: 100%;
+      margin-top: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #1a1a1e;
+      color: var(--text);
+      font-size: 12px;
+    }
+    #write-status { color: var(--muted); font-size: 12px; }
+    #metadata-editor {
+      position: fixed;
+      right: 280px;
+      top: 54px;
+      z-index: 60;
+      width: 250px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+      font-size: 12px;
+    }
+    #metadata-toggle {
+      width: 100%;
+      text-align: left;
+      background: #374151;
+      border-radius: 8px 8px 0 0;
+      padding: 8px 10px;
+      font-weight: 600;
+    }
+    #metadata-editor.collapsed #metadata-form { display: none; }
+    #metadata-form {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+    }
+    #metadata-form label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+    }
+    #metadata-form select,
+    #metadata-form input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #1a1a1e;
+      color: var(--text);
+      font-size: 12px;
+    }
+    input[type="file"] { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GT Annotation</h1>
+    <button id="btn-open">Open folder</button>
+    <span id="progress">— / —</span>
+    <span id="image-name"></span>
+    <span id="mode-badge" class="mode-badge">Browse</span>
+    <span id="status-msg">Select datasets/ground_truth/ folder</span>
+    <span id="write-status"></span>
+  </header>
+  <main>
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div id="label-panel">
+        <div class="label-actions">
+          <button id="btn-lit" type="button" title="Toggle lit">&#x1F506;</button>
+        </div>
+        <div id="label-buttons" class="label-buttons"></div>
+        <input id="label-custom" type="text" placeholder="or type custom label...">
+      </div>
+    </div>
+    <aside>
+      <h2>Metadata</h2>
+      <div id="meta-info" class="hint">—</div>
+      <h2>GT boxes (<span id="box-count">0</span>)</h2>
+      <ul id="box-list" class="box-list"></ul>
+      <h2>Shortcuts</h2>
+      <div class="hint">
+        <kbd>n</kbd> Draw mode on/off<br>
+        Drag to draw a rectangle<br>
+        Click a box to edit label<br>
+        Click outside panel to dismiss<br>
+        <kbd>→</kbd> Next <kbd>←</kbd> Previous<br>
+        <kbd>s</kbd> Skip
+      </div>
+    </aside>
+  </main>
+
+  <section id="metadata-editor" class="collapsed" aria-label="Image metadata editor">
+    <button id="metadata-toggle" type="button">Metadata</button>
+    <div id="metadata-form">
+      <label>building
+        <select id="meta-building">
+          <option value="pmb">pmb</option>
+          <option value="db">db</option>
+          <option value="ieb">ieb</option>
+          <option value="lib">lib</option>
+          <option value="trent">trent</option>
+          <option value="pb">pb</option>
+          <option value="tb">tb</option>
+        </select>
+      </label>
+      <label>location
+        <select id="meta-location">
+          <option value="inside">inside</option>
+          <option value="outside">outside</option>
+        </select>
+      </label>
+      <label>distance_cm
+        <input id="meta-distance" type="number" step="1">
+      </label>
+      <label>notes
+        <input id="meta-notes" type="text">
+      </label>
+    </div>
+  </section>
+
+  <input type="file" id="dir-input" webkitdirectory multiple>
+
+  <script>
+  const COARSE_COLORS = {
+    floor_button_candidate: "#3b82f6",
+    door_button_candidate: "#22c55e",
+    call_button_candidate: "#f97316",
+    button_candidate: "#ef4444",
+    alarm: "#ef4444",
+    other: "#9ca3af",
+  };
+
+  const PRESET_BUTTONS = [
+    { label: "B1", coarse_type: "floor_button_candidate", color: "#3b82f6" },
+    { label: "1", coarse_type: "floor_button_candidate", color: "#3b82f6" },
+    { label: "2", coarse_type: "floor_button_candidate", color: "#3b82f6" },
+    { label: "3", coarse_type: "floor_button_candidate", color: "#3b82f6" },
+    { label: "4", coarse_type: "floor_button_candidate", color: "#3b82f6" },
+    { label: "5", coarse_type: "floor_button_candidate", color: "#3b82f6" },
+    { label: "open", coarse_type: "door_button_candidate", color: "#22c55e" },
+    { label: "close", coarse_type: "door_button_candidate", color: "#22c55e" },
+    { label: "up", coarse_type: "call_button_candidate", color: "#f97316" },
+    { label: "down", coarse_type: "call_button_candidate", color: "#f97316" },
+    { label: "alarm", coarse_type: "button_candidate", color: "#ef4444" },
+  ];
+
+  const BUILDING_OPTIONS = ["pmb", "db", "ieb", "lib", "trent", "pb", "tb"];
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const btnOpen = document.getElementById("btn-open");
+  const dirInput = document.getElementById("dir-input");
+  const labelPanelEl = document.getElementById("label-panel");
+  const labelButtonsEl = document.getElementById("label-buttons");
+  const labelCustomInput = document.getElementById("label-custom");
+  const btnLit = document.getElementById("btn-lit");
+  const metadataEditor = document.getElementById("metadata-editor");
+  const metadataToggle = document.getElementById("metadata-toggle");
+  const metaBuilding = document.getElementById("meta-building");
+  const metaLocation = document.getElementById("meta-location");
+  const metaDistance = document.getElementById("meta-distance");
+  const metaNotes = document.getElementById("meta-notes");
+
+  let rootHandle = null;
+  let imagesDirHandle = null;
+  let gtDirHandle = null;
+  let metaDirHandle = null;
+  let canWriteFiles = false;
+
+  let items = [];
+  let currentIndex = 0;
+  let drawMode = true;
+  let dragStart = null;
+  let dragCurrent = null;
+  let labelPanel = null;
+  let selectedBoxIndex = -1;
+  let isUpdatingMetaForm = false;
+  let metadataIndex = {};
+  const gtCache = new Map();
+
+  function todayStr() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  }
+
+  function gtFileName(stem) {
+    return `${stem}_gt.json`;
+  }
+
+  function parseStemTags(stem) {
+    const m = stem.match(/^([a-z]+)_([a-z_]+)_\d+_rgb$/i);
+    if (m) return { building: m[1], location: m[2] };
+    return { building: "N/A", location: "N/A" };
+  }
+
+  function boxBorderColor(coarse_type) {
+    return COARSE_COLORS[coarse_type] || COARSE_COLORS.other;
+  }
+
+  function boxDisplayLabel(box) {
+    if (box.label) return box.label;
+    if (box.coarse_type === "alarm") return "alarm";
+    return "";
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[ch]));
+  }
+
+  function inferCoarseType(label) {
+    const raw = label.trim();
+    const t = raw.toLowerCase();
+    if (/^\d+$/.test(t) || /^b\d+$/i.test(raw)) return "floor_button_candidate";
+    if (t === "open" || t === "close") return "door_button_candidate";
+    if (t === "up" || t === "down") return "call_button_candidate";
+    return "button_candidate";
+  }
+
+  function isPanelOpen() {
+    return labelPanel !== null;
+  }
+
+  async function buildMetadataFromHandle(handle) {
+    metadataIndex = {};
+    if (!handle) return;
+    for await (const entry of handle.values()) {
+      if (entry.kind !== "file" || !entry.name.endsWith(".jsonl")) continue;
+      const file = await entry.getFile();
+      await ingestMetadataText(await file.text());
+    }
+  }
+
+  async function ingestMetadataText(text) {
+    for (const line of text.split("\n")) {
+      const lineTrim = line.trim();
+      if (!lineTrim) continue;
+      try {
+        const rec = JSON.parse(lineTrim);
+        const fn = rec.filename || "";
+        const stem = fn.replace(/^images\//, "").replace(/\.[^.]+$/, "");
+        if (stem) metadataIndex[stem] = rec;
+      } catch (_) { /* skip */ }
+    }
+  }
+
+  async function buildMetadataFromFiles(files) {
+    metadataIndex = {};
+    for (const f of files) {
+      if (!f.name.endsWith(".jsonl")) continue;
+      await ingestMetadataText(await f.text());
+    }
+  }
+
+  function getImageMeta(stem) {
+    const tags = parseStemTags(stem);
+    const meta = metadataIndex[stem] || {};
+    return {
+      building: meta.building || tags.building,
+      location: meta.location || meta.view || tags.location,
+      distance_cm: meta.distance_cm != null ? meta.distance_cm : "N/A",
+      button_lit: meta.button_lit || "N/A",
+      notes: meta.notes || "",
+    };
+  }
+
+  function defaultGtState(stem) {
+    return {
+      image_stem: stem,
+      annotated_at: todayStr(),
+      ground_truth: [],
+      image_meta: getImageMeta(stem),
+      extra: {},
+    };
+  }
+
+  function editableImageMeta(state) {
+    const fallback = getImageMeta(state.image_stem);
+    const saved = state.image_meta || {};
+    return {
+      building: saved.building || fallback.building || "pmb",
+      location: saved.location || fallback.location || "inside",
+      distance_cm: saved.distance_cm != null && saved.distance_cm !== "" ? saved.distance_cm : fallback.distance_cm,
+      notes: saved.notes != null ? saved.notes : (fallback.notes || ""),
+    };
+  }
+
+  function stateToGtJson(state) {
+    const ground_truth = state.ground_truth.map(box => {
+      const out = {
+        ...(box.extra || {}),
+        bbox_xyxy: box.bbox_xyxy.map(v => Math.round(v)),
+        coarse_type: box.coarse_type,
+      };
+      if (box.label) out.label = box.label;
+      if (box.lit) out.lit = true;
+      return out;
+    });
+    const image_meta = editableImageMeta(state);
+    const distanceCm = image_meta.distance_cm === "" || image_meta.distance_cm == null || image_meta.distance_cm === "N/A"
+      ? null
+      : Number(image_meta.distance_cm);
+    return {
+      ...(state.extra || {}),
+      image_stem: state.image_stem,
+      annotated_at: state.annotated_at || todayStr(),
+      ground_truth,
+      image_meta: {
+        building: image_meta.building,
+        location: image_meta.location,
+        distance_cm: distanceCm,
+        notes: image_meta.notes || "",
+      },
+    };
+  }
+
+  function applyGtPayload(state, payload) {
+    if (!payload) {
+      state.image_meta = editableImageMeta(state);
+      return;
+    }
+    const { image_stem, annotated_at, ground_truth, image_meta, ...extra } = payload;
+    state.extra = extra;
+    state.annotated_at = payload.annotated_at || todayStr();
+    state.ground_truth = (payload.ground_truth || []).map(b => ({
+      extra: Object.fromEntries(Object.entries(b).filter(([key]) =>
+        !["bbox_xyxy", "coarse_type", "label", "lit"].includes(key)
+      )),
+      bbox_xyxy: b.bbox_xyxy.slice(),
+      coarse_type: b.coarse_type,
+      label: b.label || "",
+      lit: Boolean(b.lit),
+    }));
+    state.image_meta = image_meta ? {
+      building: image_meta.building || "",
+      location: image_meta.location || "",
+      distance_cm: image_meta.distance_cm,
+      notes: image_meta.notes || "",
+    } : editableImageMeta(state);
+  }
+
+  function setStatus(msg) {
+    document.getElementById("status-msg").textContent = msg;
+  }
+
+  function setWriteStatus(msg) {
+    document.getElementById("write-status").textContent = msg;
+  }
+
+  function updateModeBadge() {
+    const el = document.getElementById("mode-badge");
+    if (drawMode) {
+      el.textContent = "Draw";
+      el.classList.add("active");
+      canvas.classList.add("draw-mode");
+      canvas.classList.remove("browse-mode");
+    } else {
+      el.textContent = "Browse";
+      el.classList.remove("active");
+      canvas.classList.remove("draw-mode");
+      canvas.classList.add("browse-mode");
+    }
+  }
+
+  function updateSidebar() {
+    const item = items[currentIndex];
+    if (!item) return;
+    const s = item.state;
+    const meta = editableImageMeta(s);
+    document.getElementById("meta-info").innerHTML = `
+      <div class="meta-row"><span class="meta-label">building</span> ${escapeHtml(meta.building)}</div>
+      <div class="meta-row"><span class="meta-label">location</span> ${escapeHtml(meta.location)}</div>
+      <div class="meta-row"><span class="meta-label">distance_cm</span> ${escapeHtml(meta.distance_cm)}</div>
+      <div class="meta-row"><span class="meta-label">notes</span> ${escapeHtml(meta.notes || "")}</div>
+    `;
+    document.getElementById("box-count").textContent = s.ground_truth.length;
+    const list = document.getElementById("box-list");
+    list.innerHTML = s.ground_truth.map((b, i) => {
+      const lbl = b.label ? ` · ${b.label}` : "";
+      const selected = i === selectedBoxIndex ? " selected" : "";
+      const lit = b.lit ? " · lit" : "";
+      return `<li class="type-${escapeHtml(b.coarse_type)}${selected}">#${i + 1} ${escapeHtml(b.coarse_type)}${escapeHtml(lbl)}${lit}</li>`;
+    }).join("");
+    document.getElementById("progress").textContent = `${currentIndex + 1} / ${items.length}`;
+    document.getElementById("image-name").textContent = item.stem;
+  }
+
+  function updateMetadataForm() {
+    const item = items[currentIndex];
+    isUpdatingMetaForm = true;
+    if (!item) {
+      metaBuilding.value = "pmb";
+      metaLocation.value = "inside";
+      metaDistance.value = "";
+      metaNotes.value = "";
+      isUpdatingMetaForm = false;
+      return;
+    }
+    const meta = editableImageMeta(item.state);
+    metaBuilding.value = BUILDING_OPTIONS.includes(meta.building) ? meta.building : "pmb";
+    metaLocation.value = ["inside", "outside"].includes(meta.location) ? meta.location : "inside";
+    metaDistance.value = meta.distance_cm !== "N/A" && meta.distance_cm != null ? meta.distance_cm : "";
+    metaNotes.value = meta.notes || "";
+    isUpdatingMetaForm = false;
+  }
+
+  function imageToCanvasScale(imgW, imgH) {
+    const wrap = document.getElementById("canvas-wrap");
+    const maxW = wrap.clientWidth - 24;
+    const maxH = wrap.clientHeight - 24;
+    const scale = Math.min(maxW / imgW, maxH / imgH, 1);
+    return { scale, displayW: Math.round(imgW * scale), displayH: Math.round(imgH * scale) };
+  }
+
+  function drawBox(bbox, color, lineWidth, dashed, label, lit = false) {
+    const [x1, y1, x2, y2] = bbox;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    if (lit) {
+      ctx.shadowColor = "#facc15";
+      ctx.shadowBlur = 14;
+      ctx.strokeStyle = "#facc15";
+    }
+    if (dashed) ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.setLineDash([]);
+    if (label) {
+      const fontSize = 10;
+      ctx.font = `${fontSize}px sans-serif`;
+      const tw = ctx.measureText(label).width;
+      const ly = Math.max(y1, fontSize + 2);
+      ctx.fillStyle = color;
+      ctx.fillRect(x1, ly - fontSize - 2, tw + 6, fontSize + 4);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(label, x1 + 3, ly - 2);
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    const item = items[currentIndex];
+    if (!item || !item.img) return;
+    const img = item.img;
+    const { scale, displayW, displayH } = imageToCanvasScale(img.width, img.height);
+    item.scale = scale;
+    canvas.width = displayW;
+    canvas.height = displayH;
+    ctx.drawImage(img, 0, 0, displayW, displayH);
+
+    item.state.ground_truth.forEach((b, index) => {
+      const [x1, y1, x2, y2] = b.bbox_xyxy.map(v => v * scale);
+      const color = boxBorderColor(b.coarse_type);
+      const selected = index === selectedBoxIndex;
+      drawBox([x1, y1, x2, y2], color, selected ? 4 : 2, false, boxDisplayLabel(b), b.lit);
+    });
+
+    if (dragStart && dragCurrent) {
+      const x1 = Math.min(dragStart.x, dragCurrent.x);
+      const y1 = Math.min(dragStart.y, dragCurrent.y);
+      const x2 = Math.max(dragStart.x, dragCurrent.x);
+      const y2 = Math.max(dragStart.y, dragCurrent.y);
+      drawBox([x1, y1, x2, y2], COARSE_COLORS.other, 2, true, "");
+    }
+    updateSidebar();
+    updateMetadataForm();
+  }
+
+  function hitTestGt(x, y) {
+    const item = items[currentIndex];
+    if (!item) return -1;
+    const scale = item.scale || 1;
+    const ix = x / scale;
+    const iy = y / scale;
+    for (let i = item.state.ground_truth.length - 1; i >= 0; i--) {
+      const [x1, y1, x2, y2] = item.state.ground_truth[i].bbox_xyxy;
+      if (ix >= x1 && ix <= x2 && iy >= y1 && iy <= y2) return i;
+    }
+    return -1;
+  }
+
+  function positionLabelPanel(clientX, clientY) {
+    const wrap = document.getElementById("canvas-wrap");
+    const wrapRect = wrap.getBoundingClientRect();
+    labelPanelEl.style.display = "block";
+    renderLabelPanelButtons();
+    const pw = labelPanelEl.offsetWidth || 280;
+    const ph = labelPanelEl.offsetHeight || 160;
+    let left = clientX - wrapRect.left + 12;
+    let top = clientY - wrapRect.top + 12;
+    left = Math.min(Math.max(4, left), wrap.clientWidth - pw - 4);
+    top = Math.min(Math.max(4, top), wrap.clientHeight - ph - 4);
+    labelPanelEl.style.left = `${left}px`;
+    labelPanelEl.style.top = `${top}px`;
+  }
+
+  function renderLabelPanelButtons() {
+    const item = items[currentIndex];
+    const box = labelPanel && labelPanel.editIndex >= 0 && item
+      ? item.state.ground_truth[labelPanel.editIndex]
+      : null;
+    btnLit.classList.toggle("active", Boolean(box && box.lit));
+    const extra = labelPanel ? labelPanel.extraButtons : [];
+    const buttons = [...PRESET_BUTTONS, ...extra];
+    labelButtonsEl.innerHTML = buttons.map((b, i) =>
+      `<button type="button" data-idx="${i}" style="background:${b.color}">${b.label}</button>`
+    ).join("");
+    labelButtonsEl.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx, 10);
+        const b = buttons[idx];
+        applyLabel(b.coarse_type, b.label);
+      });
+    });
+  }
+
+  function showLabelPanel(clientX, clientY, bbox, editIndex = -1) {
+    selectedBoxIndex = editIndex;
+    labelPanel = { bbox: bbox.slice(), editIndex, extraButtons: [] };
+    labelCustomInput.value = "";
+    positionLabelPanel(clientX, clientY);
+    if (editIndex < 0) labelCustomInput.focus();
+    render();
+  }
+
+  function hideLabelPanel() {
+    labelPanel = null;
+    labelPanelEl.style.display = "none";
+    labelCustomInput.value = "";
+    drawMode = true;
+    updateModeBadge();
+    render();
+  }
+
+  async function applyLabel(coarse_type, label) {
+    if (!labelPanel) return;
+    const item = items[currentIndex];
+    const existingBox = labelPanel.editIndex >= 0
+      ? item.state.ground_truth[labelPanel.editIndex]
+      : null;
+    const box = {
+      extra: existingBox ? existingBox.extra || {} : {},
+      bbox_xyxy: labelPanel.bbox.slice(),
+      coarse_type,
+      label,
+      lit: existingBox ? Boolean(existingBox.lit) : false,
+    };
+    if (labelPanel.editIndex >= 0) {
+      item.state.ground_truth[labelPanel.editIndex] = box;
+      setStatus("Box updated");
+    } else {
+      item.state.ground_truth.push(box);
+      setStatus("Box added");
+    }
+    item.state.annotated_at = todayStr();
+    hideLabelPanel();
+    await saveCurrentGt();
+  }
+
+  async function toggleSelectedLit() {
+    if (!labelPanel || labelPanel.editIndex < 0) return;
+    const item = items[currentIndex];
+    const box = item.state.ground_truth[labelPanel.editIndex];
+    if (!box) return;
+    box.lit = !box.lit;
+    item.state.annotated_at = todayStr();
+    setStatus(box.lit ? "Box marked lit" : "Box marked unlit");
+    await saveCurrentGt();
+    render();
+    renderLabelPanelButtons();
+  }
+
+  async function deleteSelectedBox() {
+    const item = items[currentIndex];
+    if (!item || selectedBoxIndex < 0) return;
+    if (!item.state.ground_truth[selectedBoxIndex]) return;
+    item.state.ground_truth.splice(selectedBoxIndex, 1);
+    selectedBoxIndex = -1;
+    labelPanel = null;
+    labelPanelEl.style.display = "none";
+    item.state.annotated_at = todayStr();
+    setStatus("Box deleted");
+    render();
+    await saveCurrentGt();
+  }
+
+  async function saveMetadataFromForm() {
+    if (isUpdatingMetaForm) return;
+    const item = items[currentIndex];
+    if (!item) return;
+    item.state.image_meta = {
+      building: metaBuilding.value,
+      location: metaLocation.value,
+      distance_cm: metaDistance.value === "" ? null : Number(metaDistance.value),
+      notes: metaNotes.value,
+    };
+    item.state.annotated_at = todayStr();
+    updateSidebar();
+    await saveCurrentGt();
+  }
+
+  async function saveCurrentGt() {
+    const item = items[currentIndex];
+    if (!item) return;
+    const payload = stateToGtJson(item.state);
+    const json = JSON.stringify(payload, null, 2) + "\n";
+    const fname = gtFileName(item.stem);
+    gtCache.set(fname, json);
+
+    if (gtDirHandle && canWriteFiles) {
+      try {
+        const fh = await gtDirHandle.getFileHandle(fname, { create: true });
+        const w = await fh.createWritable();
+        await w.write(json);
+        await w.close();
+        setWriteStatus(`Saved ${fname}`);
+        return true;
+      } catch (e) {
+        setWriteStatus(`Write failed: ${e.message}`);
+        canWriteFiles = false;
+      }
+    } else {
+      setWriteStatus(`Cached ${fname} (no write permission)`);
+    }
+    return false;
+  }
+
+  async function loadExistingGt(stem) {
+    const fname = gtFileName(stem);
+    if (gtCache.has(fname)) {
+      return JSON.parse(gtCache.get(fname));
+    }
+    if (gtDirHandle) {
+      try {
+        const fh = await gtDirHandle.getFileHandle(fname);
+        const file = await fh.getFile();
+        const text = await file.text();
+        gtCache.set(fname, text);
+        return JSON.parse(text);
+      } catch (_) { /* not found */ }
+    }
+    return null;
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      if (src instanceof Blob) img.src = URL.createObjectURL(src);
+      else img.src = src;
+    });
+  }
+
+  async function showCurrent() {
+    hideLabelPanel();
+    const item = items[currentIndex];
+    if (!item) return;
+    selectedBoxIndex = -1;
+    item.state = defaultGtState(item.stem);
+    const saved = await loadExistingGt(item.stem);
+    applyGtPayload(item.state, saved);
+    if (!item.img) {
+      item.img = await loadImage(item.imageBlob);
+    }
+    render();
+  }
+
+  async function navigate(delta) {
+    if (!items.length) return;
+    hideLabelPanel();
+    await saveCurrentGt();
+    const next = currentIndex + delta;
+    if (next < 0 || next >= items.length) return;
+    currentIndex = next;
+    drawMode = true;
+    updateModeBadge();
+    await showCurrent();
+  }
+
+  async function skipImage() {
+    const item = items[currentIndex];
+    if (!item) return;
+    hideLabelPanel();
+    item.state.annotated_at = todayStr();
+    await saveCurrentGt();
+    setStatus(`Skipped ${item.stem}`);
+    if (currentIndex < items.length - 1) {
+      currentIndex++;
+      drawMode = true;
+      updateModeBadge();
+      await showCurrent();
+    }
+  }
+
+  function isRgbImageName(name) {
+    return /_rgb\.(jpe?g|png|webp)$/i.test(name);
+  }
+
+  async function loadGtCacheFromHandle(handle) {
+    if (!handle) return;
+    for await (const entry of handle.values()) {
+      if (entry.kind === "file" && entry.name.endsWith("_gt.json")) {
+        const file = await entry.getFile();
+        gtCache.set(entry.name, await file.text());
+      }
+    }
+  }
+
+  async function loadImagesFromHandle(imagesHandle) {
+    const entries = [];
+    for await (const entry of imagesHandle.values()) {
+      if (entry.kind === "file" && isRgbImageName(entry.name)) {
+        entries.push(entry);
+      }
+    }
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+    items = [];
+    for (const entry of entries) {
+      const stem = entry.name.replace(/\.[^.]+$/, "");
+      const imageBlob = await (await entry.getFile());
+      items.push({ stem, imageBlob, img: null, state: defaultGtState(stem) });
+    }
+    return items.length;
+  }
+
+  async function resolveDirectoryLayout(handle) {
+    rootHandle = handle;
+    imagesDirHandle = null;
+    gtDirHandle = handle;
+    metaDirHandle = null;
+
+    let hasImagesSubdir = false;
+    let hasRgbAtRoot = false;
+    for await (const entry of handle.values()) {
+      if (entry.kind === "directory" && entry.name === "images") hasImagesSubdir = true;
+      if (entry.kind === "file" && isRgbImageName(entry.name)) hasRgbAtRoot = true;
+    }
+
+    if (hasImagesSubdir) {
+      imagesDirHandle = await handle.getDirectoryHandle("images");
+      gtDirHandle = handle;
+      try { metaDirHandle = handle; } catch (_) {}
+    } else if (hasRgbAtRoot) {
+      if (handle.name === "images") {
+        throw new Error("Select the datasets/ground_truth/ root folder (with images/). GT JSON will be saved there.");
+      }
+      imagesDirHandle = handle;
+      gtDirHandle = handle;
+    } else {
+      throw new Error("No *_rgb images found. Select datasets/ground_truth/ or its images/ subfolder.");
+    }
+
+    await buildMetadataFromHandle(handle);
+    await loadGtCacheFromHandle(gtDirHandle);
+  }
+
+  async function loadFromDirectoryHandle(handle) {
+    await resolveDirectoryLayout(handle);
+    const count = await loadImagesFromHandle(imagesDirHandle);
+    if (!count) throw new Error("No *_rgb images in folder.");
+
+    currentIndex = 0;
+    drawMode = true;
+    updateModeBadge();
+    setStatus(`Loaded ${count} image(s)`);
+    setWriteStatus(canWriteFiles ? "GT JSON write enabled" : "");
+    await showCurrent();
+  }
+
+  async function openWithDirectoryPicker() {
+    if (!window.showDirectoryPicker) return false;
+    try {
+      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      canWriteFiles = true;
+      await loadFromDirectoryHandle(handle);
+      return true;
+    } catch (e) {
+      if (e.name !== "AbortError") setStatus(`Cannot open folder: ${e.message}`);
+      return false;
+    }
+  }
+
+  async function loadFromFileList(fileList) {
+    const files = Array.from(fileList);
+    await buildMetadataFromFiles(files);
+
+    const imageFiles = [];
+    for (const f of files) {
+      if (!isRgbImageName(f.name)) continue;
+      const rel = f.webkitRelativePath || f.name;
+      if (rel.includes("/images/") || !rel.includes("/")) {
+        imageFiles.push(f);
+      }
+    }
+    imageFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+    for (const f of files) {
+      if (f.name.endsWith("_gt.json")) {
+        gtCache.set(f.name, await f.text());
+      }
+    }
+
+    canWriteFiles = false;
+    gtDirHandle = null;
+    items = [];
+    for (const f of imageFiles) {
+      const stem = f.name.replace(/\.[^.]+$/, "");
+      items.push({ stem, imageBlob: f, img: null, state: defaultGtState(stem) });
+    }
+    if (!items.length) throw new Error("No *_rgb images found.");
+
+    currentIndex = 0;
+    drawMode = true;
+    updateModeBadge();
+    setStatus(`Loaded ${items.length} image(s) (read-only — use Chrome Open folder to save)`);
+    setWriteStatus("webkitdirectory is read-only; cannot auto-save");
+    await showCurrent();
+  }
+
+  btnOpen.addEventListener("click", async () => {
+    const ok = await openWithDirectoryPicker();
+    if (!ok) dirInput.click();
+  });
+
+  dirInput.addEventListener("change", async (e) => {
+    if (!e.target.files || !e.target.files.length) return;
+    try {
+      await loadFromFileList(e.target.files);
+    } catch (err) {
+      setStatus(`Load failed: ${err.message}`);
+    }
+    e.target.value = "";
+  });
+
+  labelPanelEl.addEventListener("mousedown", (e) => e.stopPropagation());
+  btnLit.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    await toggleSelectedLit();
+  });
+
+  metadataToggle.addEventListener("click", () => {
+    metadataEditor.classList.toggle("collapsed");
+  });
+
+  [metaBuilding, metaLocation, metaDistance, metaNotes].forEach(input => {
+    input.addEventListener("change", saveMetadataFromForm);
+    input.addEventListener("input", () => {
+      if (input === metaNotes || input === metaDistance) saveMetadataFromForm();
+    });
+  });
+
+  labelCustomInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const text = labelCustomInput.value.trim();
+    if (!text || !labelPanel) return;
+    labelPanel.extraButtons.push({
+      label: text,
+      coarse_type: inferCoarseType(text),
+      color: "#9ca3af",
+    });
+    labelCustomInput.value = "";
+    positionLabelPanel(
+      labelPanelEl.getBoundingClientRect().left,
+      labelPanelEl.getBoundingClientRect().top
+    );
+  });
+
+  canvas.addEventListener("mousedown", (e) => {
+    if (!items.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const hit = hitTestGt(x, y);
+
+    if (isPanelOpen()) {
+      if (hit >= 0) {
+        const b = items[currentIndex].state.ground_truth[hit];
+        showLabelPanel(e.clientX, e.clientY, b.bbox_xyxy, hit);
+        return;
+      }
+      hideLabelPanel();
+      selectedBoxIndex = -1;
+    }
+
+    if (hit >= 0) {
+      const b = items[currentIndex].state.ground_truth[hit];
+      showLabelPanel(e.clientX, e.clientY, b.bbox_xyxy, hit);
+      return;
+    }
+
+    if (drawMode) {
+      selectedBoxIndex = -1;
+      dragStart = { x, y };
+      dragCurrent = { x, y };
+    } else {
+      selectedBoxIndex = -1;
+      render();
+    }
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!drawMode || !dragStart) return;
+    const rect = canvas.getBoundingClientRect();
+    dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    render();
+  });
+
+  canvas.addEventListener("mouseup", (e) => {
+    if (!drawMode || !dragStart || !dragCurrent) return;
+    const item = items[currentIndex];
+    const scale = item.scale || 1;
+    const x1 = Math.min(dragStart.x, dragCurrent.x) / scale;
+    const y1 = Math.min(dragStart.y, dragCurrent.y) / scale;
+    const x2 = Math.max(dragStart.x, dragCurrent.x) / scale;
+    const y2 = Math.max(dragStart.y, dragCurrent.y) / scale;
+    dragStart = null;
+    dragCurrent = null;
+    if (Math.abs(x2 - x1) < 8 || Math.abs(y2 - y1) < 8) {
+      render();
+      return;
+    }
+    showLabelPanel(e.clientX, e.clientY, [x1, y1, x2, y2], -1);
+    render();
+  });
+
+  document.addEventListener("keydown", async (e) => {
+    if (e.target === labelCustomInput) {
+      if (e.key === "Escape") {
+        hideLabelPanel();
+        e.preventDefault();
+      }
+      return;
+    }
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+    if (!items.length) return;
+
+    if (e.key === "n" || e.key === "N") {
+      if (isPanelOpen()) hideLabelPanel();
+      drawMode = !drawMode;
+      updateModeBadge();
+      setStatus(drawMode ? "Draw mode: drag to draw a rectangle" : "Browse mode: click a box to edit");
+      e.preventDefault();
+    } else if (e.key === "ArrowRight") {
+      await navigate(1);
+      e.preventDefault();
+    } else if (e.key === "ArrowLeft") {
+      await navigate(-1);
+      e.preventDefault();
+    } else if (e.key === "s" || e.key === "S") {
+      await skipImage();
+      e.preventDefault();
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+      await deleteSelectedBox();
+      e.preventDefault();
+    } else if (e.key === "Escape") {
+      if (isPanelOpen()) {
+        hideLabelPanel();
+        selectedBoxIndex = -1;
+      } else if (drawMode) {
+        drawMode = false;
+        dragStart = null;
+        dragCurrent = null;
+        updateModeBadge();
+        render();
+      }
+      e.preventDefault();
+    }
+  });
+
+  window.addEventListener("resize", () => render());
+  updateModeBadge();
+  </script>
+</body>
+</html>

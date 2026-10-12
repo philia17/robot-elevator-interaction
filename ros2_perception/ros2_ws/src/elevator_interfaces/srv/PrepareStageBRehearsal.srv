@@ -1,0 +1,20 @@
+# Zero-resource Stage-B Prepare.  The server consumes a fresh, terminal
+# Stage-A PRE receipt and freezes the 70 mm positional contact-approach OUT+BACK plan.  This
+# request carries receipt bytes only; it never owns a publisher, lease, or arm
+# client. Contact authority remains in the selected Stage-B policy and frozen plan.
+string canonical_stage_a_receipt_json
+string stage_a_receipt_sha256
+string request_id
+---
+bool accepted
+string authorization_id
+string plan_hash
+string stage_a_receipt_id
+string result_code
+string summary_json
+string reason
+string state
+string executor_instance_id
+uint32 publisher_count
+bool lease_active
+uint32 arm_client_count

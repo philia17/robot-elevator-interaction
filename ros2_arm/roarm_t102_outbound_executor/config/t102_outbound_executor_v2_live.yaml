@@ -1,0 +1,5 @@
+roarm_t102_outbound_executor:
+  ros__parameters:
+    planning_enabled: true
+    move_runtime_enabled: false
+    policy_path: /opt/robot-elevator-interaction/config/press/prototype/t102_dynamic_precontact_policy_20260816_v1.json

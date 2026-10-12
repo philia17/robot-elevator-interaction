@@ -1,0 +1,5 @@
+roarm_feedback_monitor:
+  ros__parameters:
+    serial_port: /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_REPLACE_DEVICE_ID-if00-port0
+    baud_rate: 115200
+    feedback_stale_s: 1.0

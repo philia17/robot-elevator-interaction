@@ -1,0 +1,68 @@
+rgbd_button_localizer_node:
+  ros__parameters:
+    rgb_topic: "/elevator/selected_frame"
+    detections_topic: "/elevator/button_detections"
+    aligned_depth_topic: "/lift_robot/camera/aligned_depth/image_raw"
+    camera_info_topic: "/lift_robot/camera/color/camera_info"
+    output_observations_topic: "/elevator/button_observations_3d"
+    output_debug_image_topic: "/elevator/som_image_3d"
+    semantic_enabled: true
+    semantic_output_topic: "/elevator/som_image_semantic"
+    # Cabin semantics use the paper-aligned Qwen3-VL-2B model. Hall mode keeps
+    # its separately configured 4B model through hall_model_path below.
+    qwen_model_path: "/data/models/qwen3-vl-2b-hf"
+    qwen_padding_ratio: 0.15
+    qwen_minimum_crop_size: 30
+    qwen_timeout_sec: 8.0
+    qwen_max_new_tokens: 16
+    qwen_cache_ttl_sec: 30.0
+    qwen_retry_cooldown_sec: 3.0
+    qwen_track_ttl_sec: 10.0
+    qwen_association_iou: 0.30
+    qwen_bbox_retry_iou: 0.65
+    qwen_prediction_log_path: ""
+    color_optical_frame: "camera_optical_frame"
+    sync_queue_size: 5
+    sync_slop_sec: 0.05
+    maximum_sync_delta_ms: 50.0
+    camera_info_max_age_sec: 1.0
+    min_depth_m: 0.15
+    max_depth_m: 5.0
+    minimum_valid_pixels: 9
+    center_roi_ratio: 0.30
+    fallback_window_size: 9
+    surface_geometry_enabled: true
+    plane_annulus_expansion_ratio: 1.8
+    plane_annulus_inner_ratio: 1.0
+    maximum_plane_depth_delta_m: 0.08
+    minimum_plane_points: 80
+    maximum_plane_points: 2000
+    minimum_plane_inlier_ratio: 0.65
+    maximum_plane_rms_residual_m: 0.008
+    minimum_plane_span_m: 0.005
+    plane_mad_rejection_multiplier: 3.5
+    surface_pixel_sigma_px: 1.0
+    surface_depth_noise_floor_m: 0.001
+    maximum_normal_uncertainty_rad: 0.17453292519943295
+    surface_geometry_method_id: "expanded_bbox_annulus_svd_mad_v1"
+    # Prototype acceptance is recorded in
+    # config/press/prototype/gemini335_static_provenance_acceptance_20260815_v1.json.
+    # This does not grant motion/contact authority or production release.
+    surface_geometry_scope: "research_prototype_motion"
+    canonical_frame_id: "camera_optical_frame"
+    raw_to_canonical_alias_id: "gemini335_color_optical_frame_to_camera_optical_frame_identity_v1"
+    raw_to_canonical_alias_status: "verified"
+    raw_to_canonical_adapter_sha256: "2ba5dbfa8c84b4c53a24cdeed04d865a1fb1046b01aa8f6f321dba641d436fb0"
+    section_b_calibration_id: "gemini335_roarm_20260803_r6__scipy_separable_absolute__b5_tag_gap_250ms_v3"
+    camera_optical_axis_status: "verified"
+    rgb_depth_registration_id: "gemini335_aligned_depth_to_color_nominal"
+    rgb_depth_registration_status: "verified"
+    depth_scale_m_per_unit: 0.001
+    depth_scale_status: "verified"
+
+    # ── hall mode overrides ──
+    hall_model_path: "/data/models/qwen3-vl-4b-hf"
+    hall_reference_up: "/opt/robot-elevator-interaction/scripts/sprint3/assets/hall_reference_up.png"
+    hall_reference_down: "/opt/robot-elevator-interaction/scripts/sprint3/assets/hall_reference_down.png"
+    hall_padding_ratio: 0.40
+    hall_upscale: 5.0

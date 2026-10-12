@@ -1,0 +1,14 @@
+buildings:
+  building_a:
+    floors:
+      "1":
+        displayed_label: "G"
+        aliases: ["G", "GF", "Ground", "1"]
+
+      "2":
+        displayed_label: "2"
+        aliases: ["2", "Floor 2"]
+
+      "4":
+        displayed_label: "3B"
+        aliases: ["3B", "Floor 4", "Fourth Floor"]

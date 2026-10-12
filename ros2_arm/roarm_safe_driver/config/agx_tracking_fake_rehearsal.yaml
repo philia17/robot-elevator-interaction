@@ -1,0 +1,26 @@
+# Isolated-domain rehearsal profile. Uses TrackingFakeSerialTransport so
+# commanded T101/T102 targets are echoed as healthy T:1051 feedback. Never
+# opens a real serial port. Launch with a non-production ROS_DOMAIN_ID
+# (e.g. 152) so it cannot collide with the live serial driver on 151.
+roarm_safe_driver:
+  ros__parameters:
+    transport: tracking_fake
+    dry_run: true
+    fake_feedback: true
+    # Seed matches the operator-designated press standby so M2/M3 authorize can bind.
+    fake_feedback_pose_rad:
+      - -0.012271846
+      - -0.728640874
+      - 2.000310947
+      - 1.023165186
+      - 0.001533981
+      - 0.03067961558979304
+    request_feedback_once_on_start: false
+    baud_rate: 115200
+    joint_speed_steps_s: [34, 17, 17, 23, 34, 17]
+    joint_acc_registers: [1, 1, 1, 1, 1, 1]
+    joint_max_delta_deg: [5.0, 2.0, 2.0, 3.0, 5.0, 2.0]
+    feedback_timeout_s: 1.0
+    command_timeout_s: 5.0
+    tolerance_deg: 0.5
+    convergence_samples: 20

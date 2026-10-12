@@ -1,0 +1,9 @@
+std_msgs/Header header
+bool found
+string request_id
+string building_id
+string requested_floor
+string effective_label
+ButtonObservation button
+float32 candidate_confidence
+string reason

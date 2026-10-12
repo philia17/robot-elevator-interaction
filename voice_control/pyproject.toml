@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voice-control"
+version = "0.4.3"
+description = "Portable local-audio voice-control core for lift robot (dry-run only)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+asr = ["numpy==1.26.4", "sherpa-onnx==1.13.4"]
+
+[project.scripts]
+voice-control = "voice_control.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

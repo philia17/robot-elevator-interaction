@@ -1,0 +1,5 @@
+# Dependencies used by scripts/run_offline_tests.sh; no neural model runtime required.
+pytest>=8,<10
+numpy>=2,<3
+PyYAML>=6,<7
+opencv-python-headless>=4.10,<5

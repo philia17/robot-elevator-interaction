@@ -1,0 +1,32 @@
+# QC-only zero-resource preparation for one post-PRE no-contact tangent move.
+# The executor validates the canonical Stage-A receipt and execution-ready
+# ray-plane calibration, computes one immutable candidate, and returns a
+# single-use authorization. This service creates no lease, arm client, or
+# /roarm_safe/joint_target publisher.
+string request_id
+string alignment_id
+string canonical_arrival_receipt_json
+string arrival_receipt_sha256
+string canonical_ray_plane_measurement_json
+string ray_plane_measurement_sha256
+string confirmation_token
+---
+bool accepted
+string code
+string state
+string authorization_id
+string alignment_id
+string arrival_receipt_id
+string canonical_alignment_plan_json
+string alignment_plan_sha256
+float64[6] candidate_target_rad
+float64 requested_tangent_norm_m
+float64 commanded_tangent_norm_m
+string executor_instance_id
+string kinematic_model_hash
+string collision_proxy_hash
+string tool_model_hash
+uint32 publisher_count
+bool lease_active
+uint32 arm_client_count
+string reason

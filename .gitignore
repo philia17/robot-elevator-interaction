@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest_tmp/
+build/
+install/
+log/
+.env
+.env.*
+*.pt
+*.pth
+*.onnx
+*.gguf
+*.joblib
+*.bag
+*.db3

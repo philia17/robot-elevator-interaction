@@ -1,0 +1,37 @@
+schema_version: 1
+adapter_id: gemini335_canonical_v1
+runtime_implementation: lift_robot_camera_adapter_cpp
+coordinate_contract_version: "1.0.0"
+device_model: Orbbec Gemini 335
+raw_inputs:
+  color_image: /gemini335/color/image_raw
+  color_camera_info: /gemini335/color/camera_info
+  aligned_depth_image: /gemini335/depth/image_raw
+  aligned_depth_camera_info: /gemini335/depth/camera_info
+  audited_color_frame_id: gemini335_color_optical_frame
+canonical_outputs:
+  color_image: /lift_robot/camera/color/image_raw
+  color_camera_info: /lift_robot/camera/color/camera_info
+  aligned_depth_image: /lift_robot/camera/aligned_depth/image_raw
+  aligned_depth_camera_info: /lift_robot/camera/aligned_depth/camera_info
+  frame_id: camera_optical_frame
+  image_publish_rate_cap_hz: 30.0
+  image_publish_rate_note: "The active C++ adapter allows the complete 30 Hz vendor stream; the limit is a cap, not a claimed measured output rate."
+  dimensions: [1920, 1080]
+  mixed_depth_dimensions_fail_closed: true
+published_tf:
+  - parent: camera_link
+    child: camera_optical_frame
+    translation_m: [0.0, 0.0, 0.0]
+    rotation_xyzw: [-0.5, 0.5, -0.5, 0.5]
+not_published_pending_tf:
+  - parent: cart_base
+    child: camera_link
+    status: pending
+    translation_m: null
+    rotation_xyzw: null
+vendor_tf_allowed_for_execution: false
+integrated_launch_vendor_publish_tf: false
+optical_axis_validation_status: pending_physical_test
+depth_scale_status: pending_phase12
+depth_scale_m_per_unit: null

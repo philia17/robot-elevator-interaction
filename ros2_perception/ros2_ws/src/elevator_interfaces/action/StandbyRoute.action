@@ -1,0 +1,27 @@
+# Consume exactly the route issued by PrepareStandbyRoute. No route values are accepted here.
+string authorization_id
+string plan_hash
+string confirmation_text
+string session_id
+---
+bool success
+string terminal_code
+string terminal_reason
+string state
+string session_id
+string plan_hash
+uint32 terminal_joint_target_publishers
+bool terminal_precontact_lease_active
+bool terminal_armed
+bool teardown_complete
+float64 endpoint_max_joint_error_rad
+float64 terminal_feedback_age_s
+uint32 waypoint_count
+bool no_motion
+---
+string state
+string gate
+uint32 waypoint_index
+uint32 waypoint_count
+string plan_hash
+string session_id

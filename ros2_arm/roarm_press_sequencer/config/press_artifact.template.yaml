@@ -1,0 +1,57 @@
+# TEMPLATE ONLY. Null/TODO fields deliberately make normal loading fail closed.
+schema_version: 1
+artifact_id: TODO_MEASURED_ARTIFACT_ID
+created_at: null
+robot:
+  model: roarm_m3
+  controller: t101_single_joint_only
+  joint_names:
+    - base_link_to_link1
+    - link1_to_link2
+    - link2_to_link3
+    - link3_to_link4
+    - link4_to_link5
+    - link5_to_gripper_link
+  encoder_step_rad: 0.0015339807878856412
+fixture:
+  fingerprint: null
+  arm_mount_marks_mm: null
+  panel_stop_marks_mm: null
+  panel_plane_x_mm: null
+  panel_yaw_deg: null
+  max_shift_at_2n_mm: null
+button:
+  id: null
+  center_base_mm: null
+  visible_size_mm: null
+  travel_mm: null
+  actuation_force_n: null
+  activation_signal: null
+contact:
+  frame: stock_contact
+  source: stock_end_effector
+  patch_size_mm: null
+  offset_from_hand_tcp_mm: null
+  normal_in_hand_tcp: null
+  gripper_locked_ros_rad: null
+driver_profiles:
+  base: {firmware_joint: 1, qualified: false}
+  shoulder: {firmware_joint: 2, qualified: false}
+  elbow: {firmware_joint: 3, qualified: false}
+  wrist: {firmware_joint: 4, qualified: false}
+  roll: {firmware_joint: 5, qualified: false}
+  gripper: {firmware_joint: 6, qualified: false}
+poses:
+  park: null
+  ready: null
+  pre_press: null
+  contact: null
+  press: null
+  retract: null
+segments: []
+qualification:
+  measurements_qualified: false
+  contact_qualified: false
+  activation_qualified: false
+  physical_press_enabled: false
+  required_consecutive_press_successes: 10

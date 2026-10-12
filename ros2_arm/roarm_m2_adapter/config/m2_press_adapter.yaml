@@ -1,0 +1,35 @@
+# M2 multi-joint mock-press adapter — inert by default.
+#
+# All authorization fields start empty.  The adapter will NOT create a target
+# publisher or arm client until the ~/authorize_press service is called and
+# every precondition passes.  Entering the press and retract phases each
+# additionally requires a one-shot confirmation service call with the matching
+# confirmation text parameter set.
+#
+# Required authorization parameters (set before calling ~/authorize_press):
+#   authorization_token_id
+#   authorization_artifact_sha256
+#   authorization_start_measured_digest
+#   authorization_expires_monotonic
+#   authorization_confirmation_text
+#
+# Phase confirmation parameters (set before the matching confirm service):
+#   press_confirmation_text    -> ~/confirm_press
+#   retract_confirmation_text  -> ~/confirm_retract
+#
+# Post-verify parameter (set before ~/report_post_verify):
+#   post_verify_result_json    -> JSON with the M0-B trial outcome, e.g.
+#     {"outcome": "FLOW_PASS_NO_LIGHT_EXPECTED", "trial_id": "..."}
+
+roarm_m2_press_adapter:
+  ros__parameters:
+    artifact_path: ""
+    step_timeout_sec: 30.0
+    authorization_token_id: ""
+    authorization_artifact_sha256: ""
+    authorization_start_measured_digest: ""
+    authorization_expires_monotonic: 0.0
+    authorization_confirmation_text: ""
+    press_confirmation_text: ""
+    retract_confirmation_text: ""
+    post_verify_result_json: ""

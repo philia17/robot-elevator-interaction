@@ -1,0 +1,48 @@
+# Final integration profile. Fail closed until stable names are discovered on AGX.
+usb_vid: "0c76"
+usb_pid: "161f"
+pulse_source: "REPLACE_ON_AGX_WITH_STABLE_PULSE_SOURCE"
+pulse_sink: "REPLACE_ON_AGX_WITH_STABLE_PULSE_SINK"
+wake_prompt: "REPLACE_ON_AGX_WITH_WAKE_PROMPT_WAV"
+confirm_prompt: "REPLACE_ON_AGX_WITH_CONFIRM_PROMPT_WAV"
+floor_confirm_prompt_dir: "REPLACE_ON_AGX_WITH_FLOOR_CONFIRM_PROMPT_DIR"
+confirmed_prompt: "REPLACE_ON_AGX_WITH_CONFIRMED_PROMPT_WAV"
+mismatch_prompt: "REPLACE_ON_AGX_WITH_MISMATCH_PROMPT_WAV"
+retry_prompt: "REPLACE_ON_AGX_WITH_RETRY_PROMPT_WAV"
+timeout_prompt: "REPLACE_ON_AGX_WITH_TIMEOUT_PROMPT_WAV"
+cancel_prompt: "REPLACE_ON_AGX_WITH_CANCEL_PROMPT_WAV"
+stop_prompt: "REPLACE_ON_AGX_WITH_STOP_PROMPT_WAV"
+english_prompt_dir: "REPLACE_ON_AGX_WITH_ENGLISH_PROMPT_DIR"
+english_floor_confirm_prompt_dir: "REPLACE_ON_AGX_WITH_ENGLISH_FLOOR_PROMPT_DIR"
+prompt_volume_percent: 50
+playback_timeout_seconds: 10
+post_playback_guard_seconds: 0.5
+vad_rms_threshold: 300
+vad_chunk_ms: 30
+vad_start_ms: 90
+vad_silence_ms: 600
+vad_preroll_ms: 240
+vad_min_speech_ms: 150
+vad_max_utterance_seconds: 8
+short_unknown_max_seconds: 1.0
+short_unknown_max_chars: 2
+# Legacy compatibility field; punctuation-only ASR is now always silent.
+no_speech_retry_peak_rms: 10000
+session_awake_timeout_seconds: 30
+dry_run: true
+floor_min: -2
+floor_max: 40
+confirmation_ttl_seconds: 30
+audit_dir: ""
+# Models are copied separately and are never included in the wheel. SenseVoice
+# defaults to model.int8.onnx and tokens.txt below model_dir.
+model_dir: "REPLACE_ON_AGX_WITH_SENSEVOICE_MODEL_DIR"
+model: ""
+tokens: ""
+# Reserved for a future neural VAD model; the current session uses energy settings above.
+vad: ""
+model_path: ""
+model_sha256: ""
+asr_num_threads: 2
+asr_provider: "cpu"
+max_audio_bytes: 16777216
